@@ -70,7 +70,7 @@ const Registro = () => {
 
       console.log("👉 Enviando al backend:", payload);
 
-      const res = await fetch("http://localhost:5000/registro", {
+      const res = await fetch("http://localhost:5000/api/auth/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -86,10 +86,12 @@ const Registro = () => {
         setErrors({ general: data.message || "Ocurrió un error al registrar." });
       }
     } catch (error) {
-      setErrors({ general: "Error de conexión con el servidor." });
-    } finally {
-      setLoading(false);
-    }
+  console.error(error);
+  setErrors({ general: "Error de conexión con el servidor." });
+} finally {
+  setLoading(false);
+}
+
   };
 
   return (

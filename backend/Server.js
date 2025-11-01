@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 // ===== Importar Rutas =====
+import authRoutes from "./routes/authRoutes.js";
 import alertaRoutes from "./routes/alertaRoutes.js";
 import bitacoraRoutes from "./routes/bitacoraRoutes.js";
 import calificacionRoutes from "./routes/calificacionRoutes.js";
@@ -15,8 +16,8 @@ import sucursalRoutes from "./routes/sucursalRoutes.js";
 import tipoNegocioRoutes from "./routes/tipoNegocioRoutes.js";
 import tipoRolRoutes from "./routes/tipoRolRoutes.js";
 import tipoServicioRoutes from "./routes/tipoServicioRoutes.js";
+import recuperarCuentaRoutes from "./routes/recuperarCuenta.js"; // ✅
 
-// ===== Inicialización =====
 const app = express();
 const PORT = 5000;
 
@@ -25,6 +26,7 @@ app.use(cors());
 app.use(express.json());
 
 // ===== Rutas principales =====
+app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/bitacoras", bitacoraRoutes);
 app.use("/api/calificaciones", calificacionRoutes);
@@ -38,10 +40,16 @@ app.use("/api/sucursales", sucursalRoutes);
 app.use("/api/tipoNegocio", tipoNegocioRoutes);
 app.use("/api/tipoRol", tipoRolRoutes);
 app.use("/api/tipoServicio", tipoServicioRoutes);
+app.use("/api/recuperar-cuenta", recuperarCuentaRoutes); // ✅ Aquí la añadimos
 
 // ===== Ruta raíz =====
 app.get("/", (req, res) => {
   res.send("💗 Servidor FindyRate corriendo correctamente 💗");
+});
+
+// ===== Manejo de rutas no encontradas =====
+app.use((req, res) => {
+  res.status(404).json({ message: "Ruta no encontrada" });
 });
 
 // ===== Servidor escuchando =====

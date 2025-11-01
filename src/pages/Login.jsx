@@ -13,30 +13,40 @@ const Login = () => {
 
   const togglePassword = () => setShowPassword(!showPassword);
 
-  // ===== Login con email y contraseña =====
+  // ===== Login con email y contraseña (con backend) =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/login', {
+      const res = await fetch('http://localhost:5000/api/auth/login', {  // 👈 RUTA ACTUALIZADA
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo_usuario: correo, password_usuario: password })
+        body: JSON.stringify({
+          correo_usuario: correo,
+          password_usuario: password
+        }),
       });
 
-      const data = await res.json();
-
+      // Verifica si la respuesta fue exitosa
       if (!res.ok) {
-        setError(data.message || 'Credenciales incorrectas');
-      } else {
+        const errorText = await res.text(); // leer HTML o JSON de error
+        console.error('Error del servidor:', errorText);
+        setError('Credenciales incorrectas o error del servidor');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.user) {
         // Guardar el usuario completo con id_usuario en localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
+      } else {
+        setError(data.message || 'Credenciales incorrectas');
       }
     } catch (err) {
-      setError('Error al conectar con el servidor');
-      console.error(err);
+      console.error('Error de conexión:', err);
+      setError('No se pudo conectar con el servidor');
     }
   };
 
@@ -50,7 +60,10 @@ const Login = () => {
       const user = result.user;
 
       // Guardar Google user en localStorage (sin id_usuario real del backend)
-      localStorage.setItem('user', JSON.stringify({ nombre_usuario: user.displayName || 'Usuario', correo_usuario: user.email }));
+      localStorage.setItem('user', JSON.stringify({
+        nombre_usuario: user.displayName || 'Usuario',
+        correo_usuario: user.email
+      }));
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
@@ -66,7 +79,9 @@ const Login = () => {
 
       <div className="bg-white rounded-2xl shadow-xl p-8 w-96 text-center">
         <img src={logo} alt="Find & Rate Logo" className="mx-auto mb-4 w-48 object-contain" />
-        <p className="text-sm text-gray-600 mb-6">¡Bienvenido de vuelta! Inicia sesión para continuar!</p>
+        <p className="text-sm text-gray-600 mb-6">
+          ¡Bienvenido de vuelta! Inicia sesión para continuar!
+        </p>
 
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           <label className="text-left text-sm font-medium text-gray-700">Correo</label>

@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "firebase": "^12.4.0",
     "lucide-react": "^0.545.0",
-    "mysql2": "^3.15.2",
+    "mysql2": "^3.15.3",
+    "nodemailer": "^7.0.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
@@ -35,5 +37,18 @@
     "globals": "^16.4.0",
     "tailwindcss": "^4.1.14",
     "vite": "^7.1.7"
-  }
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wendypromax/Find-Rate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wendypromax/Find-Rate/issues"
+  },
+  "homepage": "https://github.com/wendypromax/Find-Rate#readme"
 }
