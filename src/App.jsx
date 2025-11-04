@@ -14,9 +14,10 @@ import Entretenimiento from "./pages/categorias/Entretenimiento";
 import Atracciones from "./pages/categorias/Atracciones";
 import Dashboard from "./pages/Dashboard";
 import Favoritos from "./pages/Favoritos";
-import LugaresForm from "./pages/LugaresForm";
+import LugaresForm from "./pages/BuscarLugares";
 import Profile from "./pages/profile";
-import EditarPerfil from "./pages/EditarPerfil"; // ✅ importar componente
+import EditarPerfil from "./pages/EditarPerfil";
+import BuscarLugares from "./pages/BuscarLugares"; // ✅ Importar componente de búsqueda
 
 // Blog
 import PostList from "./pages/blog/PostList";
@@ -43,6 +44,7 @@ function App() {
           <Link to="/login" className="hover:text-pink-600">Login</Link>
           <Link to="/conocenos" className="hover:text-pink-600">Conócenos</Link>
           <Link to="/blog" className="hover:text-pink-600">Blog</Link>
+          <Link to="/buscar" className="hover:text-pink-600">Buscar Lugares</Link> {/* ✅ Nuevo link */}
         </nav>
       </header>
 
@@ -63,9 +65,12 @@ function App() {
         <Route path="/atracciones" element={<Atracciones />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/EditarPerfil" element={<EditarPerfil />} /> {/* ✅ nueva ruta */}
+        <Route path="/EditarPerfil" element={<EditarPerfil />} />
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
+        <Route path="/buscar" element={<BuscarLugares />} /> {/* ✅ Nueva ruta */}
+
+        {/* Blog */}
         <Route path="/blog" element={<PostList />} />
         <Route path="/blog/post/:id" element={<PostDetail />} />
         <Route path="/blog/create" element={<CreatePost />} />

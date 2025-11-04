@@ -1,8 +1,12 @@
 import express from "express";
-import { insertarLugar } from "../controllers/lugarController.js";
+import { insertarLugar, obtenerLugarPorId, buscarLugares } from "../controllers/lugarController.js";
 
 const router = express.Router();
 
-router.post("/lugares", insertarLugar);
+// 🚀 Poner la ruta de búsqueda ANTES que la de ID
+router.get("/buscar", buscarLugares);
+router.get("/:id", obtenerLugarPorId);
+
+router.post("/", insertarLugar);
 
 export default router;
