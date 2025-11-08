@@ -1,3 +1,4 @@
+// modelos/calificacionModel.js
 export class Calificacion {
   constructor({ id_calificacion, puntuacion, comentario, id_usuariofk, id_reseniafk }) {
     this.id_calificacion = id_calificacion;

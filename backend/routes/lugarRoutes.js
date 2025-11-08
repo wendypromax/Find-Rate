@@ -1,12 +1,29 @@
 import express from "express";
-import { insertarLugar, obtenerLugarPorId, buscarLugares } from "../controllers/lugarController.js";
+import { db } from "../server.js"; 
+
 
 const router = express.Router();
 
-// 🚀 Poner la ruta de búsqueda ANTES que la de ID
-router.get("/buscar", buscarLugares);
-router.get("/:id", obtenerLugarPorId);
 
-router.post("/", insertarLugar);
+
+// ✅ Promedios por lugar (corregido)
+router.get("/promedios", async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        l.id_lugar, 
+        l.nombre_lugar, 
+        ROUND(AVG(r.calificacion_resenia + 0), 1) AS promedio_calificacion
+      FROM lugar l
+      LEFT JOIN resenia r ON l.id_lugar = r.id_lugarfk
+      GROUP BY l.id_lugar, l.nombre_lugar
+    `);
+
+    res.json({ success: true, promedios: rows });
+  } catch (error) {
+    console.error("Error al obtener promedios:", error);
+    res.status(500).json({ success: false, message: "Error al obtener promedios" });
+  }
+});
 
 export default router;

@@ -17,8 +17,8 @@ import Favoritos from "./pages/Favoritos";
 import LugaresForm from "./pages/BuscarLugares";
 import Profile from "./pages/profile";
 import EditarPerfil from "./pages/EditarPerfil";
+import DetalleLugar from "./pages/DetalleLugar";
 import BuscarLugares from "./pages/BuscarLugares"; // ✅ Importar componente de búsqueda
-
 // Blog
 import PostList from "./pages/blog/PostList";
 import PostDetail from "./pages/blog/PostDetail";
@@ -45,6 +45,7 @@ function App() {
           <Link to="/conocenos" className="hover:text-pink-600">Conócenos</Link>
           <Link to="/blog" className="hover:text-pink-600">Blog</Link>
           <Link to="/buscar" className="hover:text-pink-600">Buscar Lugares</Link> {/* ✅ Nuevo link */}
+    
         </nav>
       </header>
 
@@ -69,6 +70,7 @@ function App() {
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/buscar" element={<BuscarLugares />} /> {/* ✅ Nueva ruta */}
+ <Route path="/detalleLugar" element={<DetalleLugar />} />
 
         {/* Blog */}
         <Route path="/blog" element={<PostList />} />

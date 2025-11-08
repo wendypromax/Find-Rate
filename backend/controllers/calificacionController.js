@@ -1,4 +1,5 @@
-import { CalificacionService } from "../services/calificacionService.js";
+// controladores/calificacionController.js
+import { CalificacionService } from "../servicios/calificacionService.js";
 
 export const getCalificaciones = async (req, res) => {
   try {
@@ -44,3 +45,14 @@ export const deleteCalificacion = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+import { CalificacionService } from "../services/calificacionService.js";
+
+export const getPromedioPorLugar = async (req, res) => {
+  try {
+    const data = await CalificacionService.getPromedioPorLugar();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
