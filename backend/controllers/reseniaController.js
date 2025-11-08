@@ -1,5 +1,5 @@
 // 📂 controllers/reseniaController.js
-import { db } from "../server.js";
+import { db } from "../Server.js";
 
 // ✅ Obtener todas las reseñas
 export const getResenias = async (req, res) => {
