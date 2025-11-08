@@ -62,3 +62,32 @@ const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en puerto ${PORT}`);
 });
+
+
+// ✅ Ruta para obtener reseñas por lugar
+app.get("/resenias/:id_lugar", async (req, res) => {
+  const { id_lugar } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+         r.id_resenia, 
+         r.comentario_resenia, 
+         r.calificacion_resenia, 
+         r.fecha_resenia, 
+         r.hora_resenia, 
+         u.nombre_usuario, 
+         u.apellido_usuario
+       FROM resenia r
+       JOIN usuario u ON r.id_usuariofk = u.id_usuario
+       WHERE r.id_lugarfk = ?
+       ORDER BY r.fecha_resenia DESC;`,
+      [id_lugar]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("❌ Error al obtener reseñas:", error);
+    res.status(500).json({ message: "Error al obtener reseñas" });
+  }
+});
