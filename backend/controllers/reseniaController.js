@@ -37,21 +37,28 @@ export const getReseniasByLugar = async (req, res) => {
   }
 };
 
-// ✅ Crear nueva reseña (HU05)
+// ✅ Crear nueva reseña
 export const createResenia = async (req, res) => {
   const { comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk } = req.body;
+
   if (!comentario_resenia || !calificacion_resenia || !id_usuariofk || !id_lugarfk) {
     return res.status(400).json({ success: false, message: "Faltan campos obligatorios" });
   }
 
   try {
     const [result] = await db.query(
-      "INSERT INTO resenia (comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk) VALUES (?, ?, ?, ?)",
+      `INSERT INTO resenia (comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk)
+       VALUES (?, ?, ?, ?)`,
       [comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk]
     );
-    res.status(201).json({ success: true, message: "Reseña creada", id_resenia: result.insertId });
+
+    res.status(201).json({
+      success: true,
+      message: "Reseña creada exitosamente",
+      id_resenia: result.insertId,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error al crear la reseña:", error);
     res.status(500).json({ success: false, message: "Error al crear la reseña" });
   }
 };
