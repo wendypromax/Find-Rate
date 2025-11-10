@@ -41,8 +41,6 @@ function App() {
     navigate("/"); // Redirigir al inicio
   };
 
- 
-
   return (
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-white">
@@ -66,11 +64,10 @@ function App() {
             </>
           )}
 
-          {/* Si hay sesión → mostrar solo “Mi Panel” y “Cerrar sesión” */}
+          {/* Si hay sesión → mostrar solo "Mi Panel" */}
           {user && (
             <>
               <Link to="/dashboard" className="hover:text-pink-600 transition">Mi Panel</Link>
-              
             </>
           )}
         </nav>
@@ -97,7 +94,9 @@ function App() {
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/mis-lugares" element={<MisLugares />} />
-        <Route path="/detalleLugar" element={<DetalleLugar />} />
+        
+        {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
+        <Route path="/lugar/:id" element={<DetalleLugar />} />
 
         {/* Página no encontrada */}
         <Route

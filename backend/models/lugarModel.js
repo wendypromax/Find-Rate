@@ -1,79 +1,146 @@
-import Joi from "joi";
-import { LugarModel } from "../models/LugarModel.js";
+import { db } from "../Server.js";
 
-// 🔹 Esquema de validación con Joi
-const lugarSchema = Joi.object({
-  nit_lugar: Joi.string().max(20).required(),
-  nombre_lugar: Joi.string().max(100).required(),
-  localidad_lugar: Joi.string().max(100).required(),
-  direccion_lugar: Joi.string().max(200).required(),
-  red_social_lugar: Joi.string().max(150).allow(null, ""),
-  tipo_entrada_lugar: Joi.string().valid("gratis", "pago").required(),
-  id_usuariofk: Joi.number().integer().required(),
-});
+export const LugarModel = {
+  // 🔹 Insertar un nuevo lugar
+  insertarLugar: async (data) => {
+    const {
+      nit_lugar,
+      nombre_lugar,
+      localidad_lugar,
+      direccion_lugar,
+      red_social_lugar,
+      tipo_entrada_lugar,
+      id_usuariofk,
+    } = data;
+    
+    const [result] = await db.query(
+      `INSERT INTO lugar 
+       (nit_lugar, nombre_lugar, localidad_lugar, direccion_lugar, red_social_lugar, tipo_entrada_lugar, id_usuariofk) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nit_lugar,
+        nombre_lugar,
+        localidad_lugar,
+        direccion_lugar,
+        red_social_lugar,
+        tipo_entrada_lugar,
+        id_usuariofk,
+      ]
+    );
+    
+    return { id_lugar: result.insertId };
+  },
 
-// 🔹 Insertar nuevo lugar
-export const insertarLugar = async (req, res) => {
-  try {
-    const { error } = lugarSchema.validate(req.body);
-    if (error) {
-      return res
-        .status(400)
-        .json({ success: false, message: error.details[0].message });
+  // 🔹 Obtener un lugar por su ID
+  obtenerLugarPorId: async (id) => {
+    const [rows] = await db.query(
+      "SELECT * FROM lugar WHERE id_lugar = ?", 
+      [id]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  },
+
+  // 🔹 Obtener todos los lugares
+  obtenerTodosLosLugares: async () => {
+    const [rows] = await db.query("SELECT * FROM lugar");
+    return rows;
+  },
+
+  // 🔹 Buscar lugares por nombre, localidad o dirección, opcionalmente filtrando por tipo
+  buscarLugares: async (query, tipo_entrada) => {
+    let sql = `
+      SELECT * FROM lugar
+      WHERE nombre_lugar LIKE ? OR localidad_lugar LIKE ? OR direccion_lugar LIKE ?
+    `;
+    
+    // ⚠️ CORRECCIÓN: Las comillas invertidas deben estar dentro de las comillas normales
+    const params = [`%${query}%`, `%${query}%`, `%${query}%`];
+    
+    if (tipo_entrada) {
+      sql += " AND tipo_entrada_lugar = ?";
+      params.push(tipo_entrada);
     }
+    
+    const [rows] = await db.query(sql, params);
+    return rows;
+  },
 
-    const result = await LugarModel.insertarLugar(req.body);
-    res.status(201).json({ success: true, ...result });
-  } catch (error) {
-    console.error("Error al insertar lugar:", error);
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+  // 🔹 Obtener lugares por usuario (empresario)
+  obtenerLugaresPorUsuario: async (id_usuario) => {
+    const [rows] = await db.query(
+      "SELECT * FROM lugar WHERE id_usuariofk = ?",
+      [id_usuario]
+    );
+    return rows;
+  },
 
-// 🔹 Obtener un lugar por su ID
-export const obtenerLugarPorId = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const lugar = await LugarModel.obtenerLugarPorId(id);
+  // 🔹 Actualizar un lugar
+  actualizarLugar: async (id, data) => {
+    const {
+      nit_lugar,
+      nombre_lugar,
+      localidad_lugar,
+      direccion_lugar,
+      red_social_lugar,
+      tipo_entrada_lugar,
+    } = data;
 
-    if (!lugar) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Lugar no encontrado" });
-    }
+    const [result] = await db.query(
+      `UPDATE lugar SET 
+       nit_lugar = ?, 
+       nombre_lugar = ?, 
+       localidad_lugar = ?, 
+       direccion_lugar = ?, 
+       red_social_lugar = ?, 
+       tipo_entrada_lugar = ?
+       WHERE id_lugar = ?`,
+      [
+        nit_lugar,
+        nombre_lugar,
+        localidad_lugar,
+        direccion_lugar,
+        red_social_lugar,
+        tipo_entrada_lugar,
+        id,
+      ]
+    );
 
-    res.json({ success: true, lugar });
-  } catch (error) {
-    console.error("Error al obtener lugar:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+    return { affectedRows: result.affectedRows };
+  },
 
-// 🔹 Buscar lugares por nombre, localidad o tipo de entrada
-export const buscarLugares = async (req, res) => {
-  try {
-    const { query, tipo_entrada } = req.query;
+  // 🔹 Actualizar imagen del lugar
+  actualizarImagenLugar: async (id, imagen_lugar) => {
+    const [result] = await db.query(
+      "UPDATE lugar SET imagen_lugar = ? WHERE id_lugar = ?",
+      [imagen_lugar, id]
+    );
+    return { affectedRows: result.affectedRows };
+  },
 
-    // Validar que venga el término de búsqueda
-    if (!query) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Debe proporcionar un término de búsqueda" });
-    }
+  // 🔹 Eliminar un lugar
+  eliminarLugar: async (id) => {
+    const [result] = await db.query(
+      "DELETE FROM lugar WHERE id_lugar = ?",
+      [id]
+    );
+    return { affectedRows: result.affectedRows };
+  },
 
-    const resultados = await LugarModel.buscarLugares(query, tipo_entrada);
+  // 🔹 Buscar lugares por localidad específica
+  buscarPorLocalidad: async (localidad) => {
+    const [rows] = await db.query(
+      "SELECT * FROM lugar WHERE localidad_lugar = ?",
+      [localidad]
+    );
+    return rows;
+  },
 
-    if (!resultados || resultados.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No se encontraron lugares" });
-    }
-
-    res.json({ success: true, resultados });
-  } catch (error) {
-    console.error("Error al buscar lugares:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error al buscar lugares" });
-  }
+  // 🔹 Buscar lugares por tipo de entrada
+  buscarPorTipoEntrada: async (tipo_entrada) => {
+    const [rows] = await db.query(
+      "SELECT * FROM lugar WHERE tipo_entrada_lugar = ?",
+      [tipo_entrada]
+    );
+    return rows;
+  },
 };

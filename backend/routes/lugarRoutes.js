@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ obtener todos los lugares (con imagen)
+//  obtener todos los lugares (con imagen)
 router.get("/con-imagen", async (req, res) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
@@ -47,7 +47,7 @@ router.get("/con-imagen", async (req, res) => {
   }
 });
 
-// ✅ registrar lugar con imagen
+// registrar lugar con imagen
 router.post("/con-imagen", upload.single("imagen_lugar"), async (req, res) => {
   const {
     nit_lugar,
@@ -97,11 +97,9 @@ router.post("/con-imagen", upload.single("imagen_lugar"), async (req, res) => {
   }
 });
 
-// ============================================================
 // Rutas originales
-// ============================================================
 
-// ✅ Obtener todos los lugares
+//  Obtener todos los lugares
 router.get("/", async (req, res) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
@@ -118,7 +116,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Obtener lugares por ID del empresario (para MisLugares.jsx)
+//  Obtener lugares por ID del empresario (para MisLugares.jsx)
 router.get("/empresario/:id_usuario", async (req, res) => {
   const { id_usuario } = req.params;
 
@@ -147,7 +145,7 @@ router.get("/empresario/:id_usuario", async (req, res) => {
   }
 });
 
-// ✅ Agregar nuevo lugar
+//  Agregar nuevo lugar
 router.post("/", async (req, res) => {
   const {
     nit_lugar,

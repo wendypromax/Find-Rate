@@ -39,7 +39,7 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json());
 
-// ✅ servir las imágenes subidas (carpeta uploads dentro de backend)
+// servir las imágenes subidas (carpeta uploads dentro de backend)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ===== Conexión a MySQL =====
@@ -68,12 +68,12 @@ app.use("/api/tipoServicio", tipoServicioRoutes);
 app.use("/api/recuperar-cuenta", recuperarCuentaRoutes);
 app.use("/api/reset-password", resetPasswordRoutes);
 
-// ✅ Rutas de lugares
+// Rutas de lugares
 app.use("/api/lugares", lugarRoutes);
 
 // ===== Ruta raíz =====
 app.get("/", (req, res) => {
-  res.send("💗 Servidor FindyRate corriendo correctamente 💗");
+  res.send(" Servidor FindyRate corriendo correctamente 💗");
 });
 
 // ===== Manejo de rutas no encontradas 
@@ -82,4 +82,4 @@ app.use((req, res) => {
 });
 
 // ===== Servidor escuchando =====
-app.listen(PORT, () => console.log(`🚀 Servidor ejecutándose en el puerto ${PORT}`));
+app.listen(PORT, () => console.log(` Servidor ejecutándose en el puerto ${PORT}`));
