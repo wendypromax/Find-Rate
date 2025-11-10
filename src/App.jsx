@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Home from "./pages/Home";
 import Conocenos from "./pages/Conocenos";
 import Registro from "./pages/Registro";
@@ -15,37 +16,63 @@ import Atracciones from "./pages/categorias/Atracciones";
 import Dashboard from "./pages/Dashboard";
 import LugaresForm from "./pages/LugaresForm";
 import Favoritos from "./pages/Favoritos";
-import Profile from "./pages/profile";
+import Profile from "./pages/Profile";
 import EditarPerfil from "./pages/EditarPerfil";
 import DetalleLugar from "./pages/DetalleLugar";
-import BuscarLugares from "./pages/BuscarLugares"; // ✅ Importar componente de búsqueda
-// Blog
-import PostList from "./pages/blog/PostList";
-import PostDetail from "./pages/blog/PostDetail";
-import CreatePost from "./pages/blog/createpost";
-
-// Sistema de notificaciones
+import MisLugares from "./pages/MisLugares";
 import { Toaster } from "react-hot-toast";
 
 function App() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  // Cargar sesión guardada
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Guardar sesión al iniciar
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    navigate("/"); // Redirigir al inicio
+  };
+
+ 
+
   return (
-    <Router>
-      {/* Navbar */}
+    <>
       <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-white">
         <div className="flex items-center space-x-2">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 bg-clip-text text-transparent flex items-center">
-            Find & Rate
+            Buscar y calificar
           </h1>
-          <span className="text-purple-500 text-2xl">⭐</span>
+          <span className="text-yellow-400 text-2xl">⭐</span>
         </div>
+
         <nav className="flex space-x-6 text-gray-700 font-medium">
-          <Link to="/" className="hover:text-pink-600">Inicio</Link>
-          <Link to="/registro" className="hover:text-pink-600">Registro</Link>
-          <Link to="/login" className="hover:text-pink-600">Login</Link>
-          <Link to="/conocenos" className="hover:text-pink-600">Conócenos</Link>
-          <Link to="/blog" className="hover:text-pink-600">Blog</Link>
-          <Link to="/buscar" className="hover:text-pink-600">Buscar Lugares</Link> {/* ✅ Nuevo link */}
-    
+          {/* Siempre visibles */}
+          <Link to="/" className="hover:text-pink-600 transition">Inicio</Link>
+          <Link to="/conocenos" className="hover:text-pink-600 transition">Conócenos</Link>
+
+          {/* Si NO hay sesión → mostrar login y registro */}
+          {!user && (
+            <>
+              <Link to="/registro" className="hover:text-pink-600 transition">Registro</Link>
+              <Link to="/login" className="hover:text-pink-600 transition">Login</Link>
+            </>
+          )}
+
+          {/* Si hay sesión → mostrar solo “Mi Panel” y “Cerrar sesión” */}
+          {user && (
+            <>
+              <Link to="/dashboard" className="hover:text-pink-600 transition">Mi Panel</Link>
+              
+            </>
+          )}
         </nav>
       </header>
 
@@ -53,8 +80,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/conocenos" element={<Conocenos />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro onLogin={handleLogin} />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/terminos" element={<Terminos />} />
         <Route path="/privacidad" element={<Privacidad />} />
         <Route path="/recuperar-cuenta" element={<RecuperarCuenta />} />
@@ -66,18 +93,13 @@ function App() {
         <Route path="/atracciones" element={<Atracciones />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/EditarPerfil" element={<EditarPerfil />} />
+        <Route path="/editarperfil" element={<EditarPerfil />} />
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
-        <Route path="/buscar" element={<BuscarLugares />} /> {/* ✅ Nueva ruta */}
- <Route path="/detalleLugar" element={<DetalleLugar />} />
+        <Route path="/mis-lugares" element={<MisLugares />} />
+        <Route path="/detalleLugar" element={<DetalleLugar />} />
 
-        {/* Blog */}
-        <Route path="/blog" element={<PostList />} />
-        <Route path="/blog/post/:id" element={<PostDetail />} />
-        <Route path="/blog/create" element={<CreatePost />} />
-
-        {/* Fallback */}
+        {/* Página no encontrada */}
         <Route
           path="*"
           element={
@@ -88,6 +110,7 @@ function App() {
         />
       </Routes>
 
+      {/* Notificaciones */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -100,13 +123,19 @@ function App() {
             padding: "12px 18px",
             borderRadius: "12px",
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-            transition: "all 0.4s ease-in-out",
           },
           iconTheme: { primary: "#ec4899", secondary: "#fff" },
         }}
       />
-    </Router>
+    </>
   );
 }
 
-export default App;
+// Envolver App dentro del Router
+export default function AppWrapper() {
+  return (
+    <Router>
+      <App />
+    </Router>
+  );
+}
