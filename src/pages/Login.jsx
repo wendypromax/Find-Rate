@@ -1,106 +1,123 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebaseConfig';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import logo from '../assets/find-rate-logo.png';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { auth } from "../firebaseConfig";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import logo from "../assets/find-rate-logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [correo, setCorreo] = useState('');
-  const [password, setPassword] = useState('');
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const togglePassword = () => setShowPassword(!showPassword);
 
-  // ===== Login con email y contraseña (con backend) =====
+  // ===== LOGIN CON BACKEND =====
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {  // 👈 RUTA ACTUALIZADA
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           correo_usuario: correo,
-          password_usuario: password
+          password_usuario: password,
         }),
       });
 
-      // Verifica si la respuesta fue exitosa
       if (!res.ok) {
-        const errorText = await res.text(); // leer HTML o JSON de error
-        console.error('Error del servidor:', errorText);
-        setError('Credenciales incorrectas o error del servidor');
+        const errorText = await res.text();
+        console.error("Error del servidor:", errorText);
+        setError("Credenciales incorrectas o error del servidor");
         return;
       }
 
       const data = await res.json();
+
       if (data.user) {
-        // Guardar el usuario completo con id_usuario en localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
+        // Guardar usuario en localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // 🔹 Redirigir SIEMPRE al Dashboard
+        navigate("/dashboard");
       } else {
-        setError(data.message || 'Credenciales incorrectas');
+        setError(data.message || "Credenciales incorrectas");
       }
     } catch (err) {
-      console.error('Error de conexión:', err);
-      setError('No se pudo conectar con el servidor');
+      console.error("Error de conexión:", err);
+      setError("No se pudo conectar con el servidor");
     }
   };
 
-  // ===== Login con Google (solo frontend) =====
+  // ===== LOGIN CON GOOGLE =====
   const handleGoogleLogin = async () => {
-    setError('');
+    setError("");
     const provider = new GoogleAuthProvider();
 
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Guardar Google user en localStorage (sin id_usuario real del backend)
-      localStorage.setItem('user', JSON.stringify({
-        nombre_usuario: user.displayName || 'Usuario',
-        correo_usuario: user.email
-      }));
-      navigate('/dashboard');
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          nombre_usuario: user.displayName || "Usuario",
+          correo_usuario: user.email,
+          id_tipo_rolfk: 1, // Por defecto, usuario normal
+        })
+      );
+
+      navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError('Error al iniciar sesión con Google');
+      setError("Error al iniciar sesión con Google");
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-pink-200 via-pink-100 to-yellow-200 relative font-sans p-6">
-      <Link to="/" className="absolute top-5 left-5 text-gray-700 text-sm hover:underline">
+      <Link
+        to="/"
+        className="absolute top-5 left-5 text-gray-700 text-sm hover:underline"
+      >
         ← Volver al inicio
       </Link>
 
       <div className="bg-white rounded-2xl shadow-xl p-8 w-96 text-center">
-        <img src={logo} alt="Find & Rate Logo" className="mx-auto mb-4 w-48 object-contain" />
+        <img
+          src={logo}
+          alt="Find & Rate Logo"
+          className="mx-auto mb-4 w-48 object-contain"
+        />
         <p className="text-sm text-gray-600 mb-6">
-          ¡Bienvenido de vuelta! Inicia sesión para continuar!
+          ¡Bienvenido de vuelta! Inicia sesión para continuar.
         </p>
 
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          <label className="text-left text-sm font-medium text-gray-700">Correo</label>
+          <label className="text-left text-sm font-medium text-gray-700">
+            Correo
+          </label>
           <input
             type="email"
             placeholder="tucorreo@email.com"
             value={correo}
-            onChange={e => setCorreo(e.target.value)}
+            onChange={(e) => setCorreo(e.target.value)}
             required
             className="w-full px-4 py-2 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400"
           />
 
-          <label className="text-left text-sm font-medium text-gray-700 mt-2">Contraseña</label>
+          <label className="text-left text-sm font-medium text-gray-700 mt-2">
+            Contraseña
+          </label>
           <div className="relative">
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="********"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-2 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400"
             />
@@ -108,13 +125,16 @@ const Login = () => {
               className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer select-none"
               onClick={togglePassword}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? "🙈" : "👁️"}
             </span>
           </div>
 
           {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
 
-          <Link to="/recuperar-cuenta" className="text-pink-600 hover:underline text-sm float-right">
+          <Link
+            to="/recuperar-cuenta"
+            className="text-pink-600 hover:underline text-sm float-right"
+          >
             ¿Olvidaste tu contraseña?
           </Link>
 
@@ -138,8 +158,11 @@ const Login = () => {
         </div>
 
         <p className="text-xs text-gray-600">
-          ¿No tienes cuenta?{' '}
-          <Link to="/registro" className="text-pink-500 font-semibold hover:underline">
+          ¿No tienes cuenta?{" "}
+          <Link
+            to="/registro"
+            className="text-pink-500 font-semibold hover:underline"
+          >
             Regístrate aquí
           </Link>
         </p>

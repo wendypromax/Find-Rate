@@ -21,12 +21,14 @@ import EditarPerfil from "./pages/EditarPerfil";
 import DetalleLugar from "./pages/DetalleLugar";
 import MisLugares from "./pages/MisLugares";
 import { Toaster } from "react-hot-toast";
+import AdminUsuarios from "./pages/AdminUsuarios.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
 
 function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  // Cargar sesión guardada
+  // 🔐 Cargar sesión guardada
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -34,17 +36,23 @@ function App() {
     }
   }, []);
 
-  // Guardar sesión al iniciar
+  // 🔐 Guardar sesión al iniciar
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    navigate("/"); // Redirigir al inicio
+    navigate("/dashboard"); // Redirige al panel
   };
 
- 
+  // 🔐 Cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/");
+  };
 
   return (
     <>
+      {/* 🔝 Barra de navegación */}
       <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-white">
         <div className="flex items-center space-x-2">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 bg-clip-text text-transparent flex items-center">
@@ -55,28 +63,52 @@ function App() {
 
         <nav className="flex space-x-6 text-gray-700 font-medium">
           {/* Siempre visibles */}
-          <Link to="/" className="hover:text-pink-600 transition">Inicio</Link>
-          <Link to="/conocenos" className="hover:text-pink-600 transition">Conócenos</Link>
+          <Link to="/" className="hover:text-pink-600 transition">
+            Inicio
+          </Link>
+          <Link to="/conocenos" className="hover:text-pink-600 transition">
+            Conócenos
+          </Link>
 
           {/* Si NO hay sesión → mostrar login y registro */}
           {!user && (
             <>
-              <Link to="/registro" className="hover:text-pink-600 transition">Registro</Link>
-              <Link to="/login" className="hover:text-pink-600 transition">Login</Link>
+              <Link to="/registro" className="hover:text-pink-600 transition">
+                Registro
+              </Link>
+              <Link to="/login" className="hover:text-pink-600 transition">
+                Login
+              </Link>
             </>
           )}
 
-          {/* Si hay sesión → mostrar solo “Mi Panel” y “Cerrar sesión” */}
+          {/* Si hay sesión → mostrar Mi Panel y, si es admin, Panel Admin */}
           {user && (
             <>
-              <Link to="/dashboard" className="hover:text-pink-600 transition">Mi Panel</Link>
-              
+              <Link to="/dashboard" className="hover:text-pink-600 transition">
+                Mi Panel
+              </Link>
+
+              {/* 👇 Solo visible para administradores */}
+              {user.id_tipo_rolfk === 3 && (
+                <Link to="/admin/usuarios" className="hover:text-pink-600 transition">
+                  Panel Admin
+                </Link>
+              )}
+
+              {/* Botón de cierre de sesión */}
+              <button
+                onClick={handleLogout}
+                className="hover:text-red-500 transition font-semibold"
+              >
+                Cerrar sesión
+              </button>
             </>
           )}
         </nav>
       </header>
 
-      {/* Rutas */}
+      {/* 📜 Rutas del sitio */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/conocenos" element={<Conocenos />} />
@@ -98,6 +130,16 @@ function App() {
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/mis-lugares" element={<MisLugares />} />
         <Route path="/detalleLugar" element={<DetalleLugar />} />
+
+        {/* 🔒 Ruta protegida solo para administradores */}
+        <Route
+          path="/admin/usuarios"
+          element={
+            <AdminRoute>
+              <AdminUsuarios />
+            </AdminRoute>
+          }
+        />
 
         {/* Página no encontrada */}
         <Route

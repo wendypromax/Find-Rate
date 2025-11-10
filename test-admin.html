@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Probar Rutas Admin</title>
+</head>
+<body>
+  <h2>Pruebas de API - Admin Usuarios</h2>
+
+  <button onclick="listar()">📋 Listar Usuarios</button>
+  <button onclick="editar()">✏️ Editar Usuario (ID 48)</button>
+  <button onclick="eliminar()">🗑️ Eliminar Usuario (ID 45)</button>
+
+  <pre id="salida"></pre>
+
+  <script>
+    const salida = document.getElementById("salida");
+    const API = "http://localhost:5000/api/admin/usuarios";
+
+    async function listar() {
+      const res = await fetch(API);
+      const data = await res.json();
+      salida.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function editar() {
+      const res = await fetch(`${API}/48`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre_usuario: "Sofia",
+          apellido_usuario: "Admin",
+          correo_usuario: "admin@findrate.com",
+          telefono_usuario: "3201234567",
+          estado_usuario: "activo",
+          id_tipo_rolfk: 3
+        })
+      });
+      const data = await res.json();
+      salida.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function eliminar() {
+      const res = await fetch(`${API}/45`, { method: "DELETE" });
+      const data = await res.json();
+      salida.textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>

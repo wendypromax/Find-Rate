@@ -1,67 +1,92 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
-export default function DetalleLugar() {
-  const [resenias, setResenias] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-
-  const params = new URLSearchParams(window.location.search);
-  const idLugar = params.get("id") || 1;
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const cargarResenias = async () => {
-      console.log("🟢 Buscando reseñas del lugar con ID:", idLugar);
-      try {
-        const res = await fetch(`http://localhost:5000/api/resenias/${idLugar}`);
-        if (!res.ok) throw new Error("Error al obtener reseñas del servidor");
-        const data = await res.json();
-        console.log("📦 Datos recibidos:", data);
-        setResenias(data);
-      } catch (err) {
-        console.error("❌ Error en fetch:", err);
-        setError(err.message);
-      } finally {
-        setCargando(false);
-      }
-    };
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      navigate("/login"); // si no hay sesión, redirige
+    }
+  }, [navigate]);
 
-    cargarResenias();
-  }, [idLugar]);
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    toast.success("Sesión cerrada correctamente 👋");
+    navigate("/login");
+  };
 
-  if (cargando) return <p>⏳ Cargando reseñas...</p>;
-  if (error) return <p>❌ Error: {error}</p>;
+  if (!user) return null;
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Poppins, sans-serif" }}>
-      <h2 style={{ color: "#e85a8e" }}>💬 Reseñas de usuarios</h2>
+    <div className="min-h-screen flex flex-col bg-pink-50">
+      {/* ===== HEADER ===== */}
+      <header className="bg-white shadow-md p-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-pink-600">
+          Bienvenida, {user.nombre_usuario}
+        </h1>
 
-      {resenias.length === 0 ? (
-        <p>No hay reseñas todavía 😢</p>
-      ) : (
-        resenias.map((r) => (
-          <div
-            key={r.id_resenia}
-            style={{
-              background: "#fff",
-              borderRadius: "12px",
-              padding: "15px",
-              marginBottom: "10px",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-            }}
-          >
-            <p>
-              <strong style={{ color: "#d63384" }}>
-                {r.nombre_usuario} {r.apellido_usuario}
-              </strong>{" "}
-              ⭐ {r.calificacion_resenia}
+        <button
+          onClick={handleLogout}
+          className="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition"
+        >
+          Cerrar sesión
+        </button>
+      </header>
+
+      {/* ===== CONTENIDO ===== */}
+      <div className="flex flex-1">
+        {/* ===== MENU LATERAL SOLO PARA ADMIN ===== */}
+        {user.id_tipo_rolfk === 3 && (
+          <aside className="w-64 bg-white shadow-md p-5">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">
+              ⚙️ Panel Admin
+            </h2>
+            <nav className="flex flex-col space-y-3">
+              <Link
+                to="/dashboard"
+                className="hover:text-pink-600 transition text-gray-700"
+              >
+                🏠 Inicio administrador
+              </Link>
+              <Link
+                to="/admin/usuarios"
+                className="hover:text-pink-600 transition text-gray-700"
+              >
+                👥 Gestión de usuarios
+              </Link>
+            </nav>
+          </aside>
+        )}
+
+        {/* ===== ZONA PRINCIPAL ===== */}
+        <main className="flex-1 p-8">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">
+            Panel principal
+          </h2>
+
+          {user.id_tipo_rolfk === 3 ? (
+            <p className="text-gray-600">
+              👑 Estás en el panel del administrador. Usa el menú para gestionar usuarios o explorar otras secciones.
             </p>
-            <p>{r.comentario_resenia}</p>
-            <small style={{ color: "#888" }}>
-              {new Date(r.fecha_resenia).toLocaleDateString()} {r.hora_resenia}
-            </small>
-          </div>
-        ))
-      )}
+          ) : user.id_tipo_rolfk === 2 ? (
+            <p className="text-gray-600">
+              💼 Bienvenido empresario. Desde aquí podrás administrar tus lugares y ver reseñas.
+            </p>
+          ) : (
+            <p className="text-gray-600">
+              🙋‍♀️ Bienvenido usuario. Aquí puedes ver tus favoritos, tus reseñas y actualizar tu perfil.
+            </p>
+          )}
+        </main>
+      </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

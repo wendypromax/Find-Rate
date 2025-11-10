@@ -16,8 +16,16 @@ export const registerUser = async (req, res) => {
   } = req.body;
 
   try {
-    if (!num_doc_usuario || !nombre_usuario || !apellido_usuario || !correo_usuario || !password_usuario) {
-      return res.status(400).json({ message: "Por favor completa todos los campos obligatorios." });
+    if (
+      !num_doc_usuario ||
+      !nombre_usuario ||
+      !apellido_usuario ||
+      !correo_usuario ||
+      !password_usuario
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Por favor completa todos los campos obligatorios." });
     }
 
     const [existing] = await db.query(
@@ -26,7 +34,9 @@ export const registerUser = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({ message: "El número de documento o correo ya están registrados." });
+      return res
+        .status(400)
+        .json({ message: "El número de documento o correo ya están registrados." });
     }
 
     const hashedPassword = await bcrypt.hash(password_usuario, 10);
@@ -63,7 +73,9 @@ export const loginUser = async (req, res) => {
   const { correo_usuario, password_usuario } = req.body;
 
   try {
-    const [rows] = await db.query("SELECT * FROM usuario WHERE correo_usuario = ?", [correo_usuario]);
+    const [rows] = await db.query("SELECT * FROM usuario WHERE correo_usuario = ?", [
+      correo_usuario,
+    ]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
@@ -97,38 +109,38 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// 🧩 Obtener usuario por ID
-export const getUserById = async (req, res) => {
-  const { id } = req.params;
+// 🧩 Obtener todos los usuarios
+export const getAllUsers = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM usuario WHERE id_usuario = ?", [id]);
-    if (rows.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
-    res.json(rows[0]);
+    const [rows] = await db.query("SELECT * FROM usuario");
+    res.json(rows);
   } catch (error) {
-    console.error("❌ Error en getUserById:", error);
-    res.status(500).json({ message: "Error al obtener usuario" });
+    console.error("❌ Error en getAllUsers:", error);
+    res.status(500).json({ message: "Error al obtener usuarios" });
   }
 };
 
-// 🧩 Actualizar usuario
-export const updateUser = async (req, res) => {
+// 🧩 Actualizar SOLO el estado del usuario
+export const updateUserStatus = async (req, res) => {
   const { id } = req.params;
-  const { num_doc_usuario, nombre_usuario, apellido_usuario, telefono_usuario, correo_usuario, edad_usuario, genero_usuario, estado_usuario } = req.body;
+  const { estado_usuario } = req.body;
 
   try {
     const [result] = await db.query(
-      `UPDATE usuario 
-       SET num_doc_usuario = ?, nombre_usuario = ?, apellido_usuario = ?, telefono_usuario = ?, correo_usuario = ?, edad_usuario = ?, genero_usuario = ?, estado_usuario = ?
-       WHERE id_usuario = ?`,
-      [num_doc_usuario, nombre_usuario, apellido_usuario, telefono_usuario, correo_usuario, edad_usuario, genero_usuario, estado_usuario, id]
+      "UPDATE usuario SET estado_usuario = ? WHERE id_usuario = ?",
+      [estado_usuario, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
 
-    res.json({ message: "Usuario actualizado correctamente ✅" });
+    res.json({ message: "Estado del usuario actualizado correctamente ✅" });
   } catch (error) {
-    console.error("❌ Error en updateUser:", error);
-    res.status(500).json({ message: "Error al actualizar usuario" });
+    console.error("❌ Error en updateUserStatus:", error);
+    res
+      .status(500)
+      .json({ message: "Error al actualizar el estado del usuario" });
   }
 };
 
@@ -137,7 +149,8 @@ export const deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await db.query("DELETE FROM usuario WHERE id_usuario = ?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Usuario no encontrado" });
     res.json({ message: "Usuario eliminado correctamente ✅" });
   } catch (error) {
     console.error("❌ Error en deleteUser:", error);
