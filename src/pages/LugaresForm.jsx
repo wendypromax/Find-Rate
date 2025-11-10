@@ -9,14 +9,28 @@ const LugaresForm = () => {
   const [direccion_lugar, setDireccion] = useState("");
   const [red_social_lugar, setRedSocial] = useState("");
   const [tipo_entrada_lugar, setTipoEntrada] = useState("");
+  const [imagen_lugar, setImagen] = useState(null);
+  const [preview, setPreview] = useState(null); // 🔹 Para vista previa
   const [mensaje, setMensaje] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user"));
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setImagen(file);
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación de campos obligatorios
     if (!nit_lugar || !nombre_lugar || !direccion_lugar) {
       setMensaje("Por favor completa todos los campos obligatorios.");
       return;
@@ -27,39 +41,55 @@ const LugaresForm = () => {
       return;
     }
 
-    const datosLugar = {
-      nit_lugar,
-      nombre_lugar,
-      localidad_lugar,
-      direccion_lugar,
-      red_social_lugar,
-      tipo_entrada_lugar,
-      id_usuariofk: user.id_usuario,
-    };
-
     try {
-      // ✅ URL corregida con /api/lugares
-      const res = await fetch("http://localhost:5000/api/lugares", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosLugar),
-      });
+      let res;
 
-      if (!res.ok) {
-        throw new Error(`Error en el servidor: ${res.status}`);
+      if (imagen_lugar) {
+        const formData = new FormData();
+        formData.append("nit_lugar", nit_lugar);
+        formData.append("nombre_lugar", nombre_lugar);
+        formData.append("localidad_lugar", localidad_lugar);
+        formData.append("direccion_lugar", direccion_lugar);
+        formData.append("red_social_lugar", red_social_lugar);
+        formData.append("tipo_entrada_lugar", tipo_entrada_lugar);
+        formData.append("id_usuariofk", user.id_usuario);
+        formData.append("imagen_lugar", imagen_lugar);
+
+        res = await fetch("http://localhost:5000/api/lugares/con-imagen", {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        const datosLugar = {
+          nit_lugar,
+          nombre_lugar,
+          localidad_lugar,
+          direccion_lugar,
+          red_social_lugar,
+          tipo_entrada_lugar,
+          id_usuariofk: user.id_usuario,
+        };
+
+        res = await fetch("http://localhost:5000/api/lugares", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosLugar),
+        });
       }
 
+      if (!res.ok) throw new Error(`Error en el servidor: ${res.status}`);
       const data = await res.json();
 
       if (data.success) {
         setMensaje("✅ Lugar registrado correctamente");
-        // Limpiar formulario
         setNit("");
         setNombre("");
         setLocalidad("");
         setDireccion("");
         setRedSocial("");
         setTipoEntrada("");
+        setImagen(null);
+        setPreview(null); // 🔹 Limpiar preview
       } else {
         setMensaje("❌ " + data.message);
       }
@@ -96,7 +126,11 @@ const LugaresForm = () => {
           </p>
         )}
 
-        <form className="flex flex-col gap-3 text-left" onSubmit={handleSubmit}>
+        <form
+          className="flex flex-col gap-3 text-left"
+          onSubmit={handleSubmit}
+          encType="multipart/form-data"
+        >
           <label>NIT del lugar *</label>
           <input
             type="text"
@@ -147,6 +181,22 @@ const LugaresForm = () => {
             onChange={(e) => setTipoEntrada(e.target.value)}
             className="w-full px-4 py-2 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400"
           />
+
+          <label>Imagen del lugar</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="w-full px-4 py-2 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400"
+          />
+
+          {preview && (
+            <img
+              src={preview}
+              alt="Vista previa"
+              className="mt-2 w-full h-48 object-cover rounded-lg border-2 border-pink-300"
+            />
+          )}
 
           <button
             type="submit"

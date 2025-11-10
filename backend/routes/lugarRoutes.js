@@ -1,6 +1,9 @@
-// backend/routes/lugarRoutes.js
 import express from "express";
 import mysql from "mysql2/promise";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 const router = express.Router();
 
@@ -10,6 +13,93 @@ const dbConfig = {
   password: "",
   database: "findyrate",
 };
+
+// --- configuración multer ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+// ✅ obtener todos los lugares (con imagen)
+router.get("/con-imagen", async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute("SELECT * FROM lugar");
+    await connection.end();
+    res.json({ success: true, lugares: rows });
+  } catch (error) {
+    console.error("❌ Error al obtener lugares:", error);
+    res.status(500).json({ success: false, message: "Error al obtener lugares" });
+  }
+});
+
+// ✅ registrar lugar con imagen
+router.post("/con-imagen", upload.single("imagen_lugar"), async (req, res) => {
+  const {
+    nit_lugar,
+    nombre_lugar,
+    localidad_lugar,
+    direccion_lugar,
+    red_social_lugar,
+    tipo_entrada_lugar,
+    id_usuariofk,
+  } = req.body;
+
+  if (!nit_lugar || !nombre_lugar || !direccion_lugar || !id_usuariofk) {
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios" });
+  }
+
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const imagen = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const [result] = await connection.execute(
+      `INSERT INTO lugar 
+      (nit_lugar, nombre_lugar, localidad_lugar, direccion_lugar, red_social_lugar, tipo_entrada_lugar, imagen_lugar, id_usuariofk)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nit_lugar,
+        nombre_lugar,
+        localidad_lugar,
+        direccion_lugar,
+        red_social_lugar,
+        tipo_entrada_lugar,
+        imagen,
+        id_usuariofk,
+      ]
+    );
+
+    await connection.end();
+
+    res.json({
+      success: true,
+      message: "✅ Lugar registrado correctamente con imagen",
+      id_lugar: result.insertId,
+      imagen_url: imagen,
+    });
+  } catch (error) {
+    console.error("❌ Error al insertar lugar:", error);
+    res.status(500).json({ success: false, message: "Error al insertar en la base de datos" });
+  }
+});
+
+// ============================================================
+// Rutas originales
+// ============================================================
 
 // ✅ Obtener todos los lugares
 router.get("/", async (req, res) => {
@@ -70,9 +160,7 @@ router.post("/", async (req, res) => {
   } = req.body;
 
   if (!nit_lugar || !nombre_lugar || !direccion_lugar || !id_usuariofk) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Faltan campos obligatorios" });
+    return res.status(400).json({ success: false, message: "Faltan campos obligatorios" });
   }
 
   try {
@@ -102,9 +190,7 @@ router.post("/", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error al insertar en la base de datos" });
+    res.status(500).json({ success: false, message: "Error al insertar en la base de datos" });
   }
 });
 

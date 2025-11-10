@@ -24,13 +24,23 @@ import recuperarCuentaRoutes from "./routes/recuperarCuenta.js";
 import resetPasswordRoutes from "./routes/resetPassword.js";
 import lugarRoutes from "./routes/lugarRoutes.js"; // ✅ Agregado
 
+// 🔹 importar path para servir archivos estáticos
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// 🔹 configurar __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // ===== Middlewares =====
 app.use(cors());
 app.use(express.json());
+
+// ✅ servir las imágenes subidas (carpeta uploads dentro de backend)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ===== Conexión a MySQL =====
 export const db = await mysql.createPool({
@@ -66,10 +76,10 @@ app.get("/", (req, res) => {
   res.send("💗 Servidor FindyRate corriendo correctamente 💗");
 });
 
-// ===== Manejo de rutas no encontradas =====
+// ===== Manejo de rutas no encontradas 
 app.use((req, res) => {
   res.status(404).json({ message: "Ruta no encontrada" });
 });
 
 // ===== Servidor escuchando =====
-app.listen(PORT, () => console.log(`Servidor ejecutándose en el puerto ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Servidor ejecutándose en el puerto ${PORT}`));
