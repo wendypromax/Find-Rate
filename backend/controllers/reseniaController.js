@@ -1,10 +1,15 @@
 // 📂 controllers/reseniaController.js
 import { db } from "../Server.js";
 
-// ✅ Obtener todas las reseñas
+// ✅ Obtener todas las reseñas CON información del usuario
 export const getResenias = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM resenia");
+    const [rows] = await db.query(
+      `SELECT r.*, u.nombre_usuario, u.apellido_usuario 
+       FROM resenia r 
+       INNER JOIN usuario u ON r.id_usuariofk = u.id_usuario 
+       ORDER BY r.fecha_resenia DESC`
+    );
     res.json({ success: true, resenias: rows });
   } catch (error) {
     console.error(error);
@@ -12,11 +17,17 @@ export const getResenias = async (req, res) => {
   }
 };
 
-// ✅ Obtener reseña por ID
+// ✅ Obtener reseña por ID CON información del usuario
 export const getReseniaById = async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.query("SELECT * FROM resenia WHERE id_resenia = ?", [id]);
+    const [rows] = await db.query(
+      `SELECT r.*, u.nombre_usuario, u.apellido_usuario 
+       FROM resenia r 
+       INNER JOIN usuario u ON r.id_usuariofk = u.id_usuario 
+       WHERE r.id_resenia = ?`, 
+      [id]
+    );
     if (rows.length === 0) return res.status(404).json({ success: false, message: "Reseña no encontrada" });
     res.json({ success: true, resenia: rows[0] });
   } catch (error) {
@@ -25,11 +36,18 @@ export const getReseniaById = async (req, res) => {
   }
 };
 
-// ✅ Obtener reseñas por lugar
+// ✅ Obtener reseñas por lugar CON información del usuario
 export const getReseniasByLugar = async (req, res) => {
   const { id_lugar } = req.params;
   try {
-    const [rows] = await db.query("SELECT * FROM resenia WHERE id_lugarfk = ?", [id_lugar]);
+    const [rows] = await db.query(
+      `SELECT r.*, u.nombre_usuario, u.apellido_usuario 
+       FROM resenia r 
+       INNER JOIN usuario u ON r.id_usuariofk = u.id_usuario 
+       WHERE r.id_lugarfk = ? 
+       ORDER BY r.fecha_resenia DESC`,
+      [id_lugar]
+    );
     res.json({ success: true, resenias: rows });
   } catch (error) {
     console.error(error);

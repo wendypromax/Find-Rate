@@ -16,10 +16,11 @@ import Atracciones from "./pages/categorias/Atracciones";
 import Dashboard from "./pages/Dashboard";
 import LugaresForm from "./pages/LugaresForm";
 import Favoritos from "./pages/Favoritos";
-import Profile from "./pages/Profile";
+import Profile from "./pages/profile";
 import EditarPerfil from "./pages/EditarPerfil";
 import DetalleLugar from "./pages/DetalleLugar";
 import MisLugares from "./pages/MisLugares";
+import MisResenas from "./pages/Misresenas";   // ✅ IMPORTANTE
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -94,9 +95,12 @@ function App() {
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/mis-lugares" element={<MisLugares />} />
-        
-        {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
+
+        {/* Detalle del lugar */}
         <Route path="/lugar/:id" element={<DetalleLugar />} />
+
+        {/* ✅ NUEVA RUTA: Página de reseñas del usuario */}
+        <Route path="/mis-resenas" element={<MisResenas />} />
 
         {/* Página no encontrada */}
         <Route

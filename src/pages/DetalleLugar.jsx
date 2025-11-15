@@ -91,7 +91,7 @@ const DetalleLugar = () => {
   // Calcular promedio de estrellas
   const calcularPromedio = () => {
     if (resenias.length === 0) return 0;
-    const suma = resenias.reduce((acc, r) => acc + r.calificacion_resenia, 0);
+    const suma = resenias.reduce((acc, r) => acc + parseInt(r.calificacion_resenia), 0);
     return (suma / resenias.length).toFixed(1);
   };
 
@@ -133,7 +133,7 @@ const DetalleLugar = () => {
       <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
         {lugar.imagen_lugar && (
           <img
-            src={lugar.imagen_lugar}
+            src={lugar.imagen_lugar.startsWith('http') ? lugar.imagen_lugar : `http://localhost:5000${lugar.imagen_lugar}`}
             alt={lugar.nombre_lugar}
             className="w-full h-64 object-cover rounded-xl mb-6"
           />
@@ -276,8 +276,11 @@ const DetalleLugar = () => {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div>
+                    {/* ✅ NUEVO CÓDIGO CORREGIDO - Muestra nombre completo */}
                     <p className="font-semibold text-gray-800 text-lg">
-                      {resenia.nombre_usuario || "Usuario anónimo"}
+                      {resenia.nombre_usuario && resenia.apellido_usuario 
+                        ? `${resenia.nombre_usuario} ${resenia.apellido_usuario}`
+                        : "Usuario anónimo"}
                     </p>
                     <p className="text-gray-500 text-sm">
                       {new Date(resenia.fecha_resenia).toLocaleDateString("es-ES", {
@@ -292,7 +295,7 @@ const DetalleLugar = () => {
                       <FaStar
                         key={star}
                         className={`w-5 h-5 ${
-                          star <= resenia.calificacion_resenia
+                          star <= parseInt(resenia.calificacion_resenia)
                             ? "text-yellow-400"
                             : "text-gray-300"
                         }`}
