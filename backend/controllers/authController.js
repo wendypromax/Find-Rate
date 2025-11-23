@@ -1,4 +1,5 @@
-import { db } from "../Server.js";
+// backend/controllers/authController.js
+import { pool as db } from "../db.js";
 import bcrypt from "bcryptjs";
 
 // 🧩 Registro de usuario

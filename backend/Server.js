@@ -1,9 +1,11 @@
-import dotenv from "dotenv";
+// Server.js
+import dotenv from 'dotenv';
 dotenv.config(); // ✅ cargar variables de entorno al inicio
 
 import express from "express";
 import cors from "cors";
-import mysql from "mysql2/promise";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // ===== Importar routers =====
 import authRoutes from "./routes/authRoutes.js";
@@ -22,16 +24,12 @@ import tipoRolRoutes from "./routes/tipoRolRoutes.js";
 import tipoServicioRoutes from "./routes/tipoServicioRoutes.js";
 import recuperarCuentaRoutes from "./routes/recuperarCuenta.js";
 import resetPasswordRoutes from "./routes/resetPassword.js";
-import lugarRoutes from "./routes/lugarRoutes.js"; // ✅ Agregado
-
-// 🔹 importar path para servir archivos estáticos
-import path from "path";
-import { fileURLToPath } from "url";
+import lugarRoutes from "./routes/lugarRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 🔹 configurar __dirname
+// 🔹 configurar __dirname para ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -41,14 +39,6 @@ app.use(express.json());
 
 // servir las imágenes subidas (carpeta uploads dentro de backend)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// ===== Conexión a MySQL =====
-export const db = await mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
 
 // ===== Rutas principales =====
 app.use("/api/auth", authRoutes);

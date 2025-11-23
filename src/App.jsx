@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Home from "./pages/Home";
@@ -130,7 +131,7 @@ function App() {
   );
 }
 
-// Envolver App dentro del Router
+// Envolver App dentro del Router (sin FavoritosProvider aquí, ya está en main.jsx)
 export default function AppWrapper() {
   return (
     <Router>

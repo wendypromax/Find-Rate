@@ -1,58 +1,43 @@
 // src/pages/Favoritos.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FaHeart, FaMapMarkerAlt, FaStar, FaArrowLeft } from "react-icons/fa";
-import axios from "axios";
+import { FaHeart, FaMapMarkerAlt, FaStar, FaArrowLeft, FaStore } from "react-icons/fa";
+import { useFavoritos } from "../context/FavoritosContext";
 
 const Favoritos = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-  const [lugares, setLugares] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { favoritos, loading, operacionLoading, eliminarFavorito } = useFavoritos();
   const [error, setError] = useState("");
+  const [eliminandoId, setEliminandoId] = useState(null); // Para controlar qué botón está cargando
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-
-    const fetchFavoritos = async () => {
-      try {
-        // ✅ CORRECCIÓN: Template literal con backticks
-        const res = await axios.get(`http://localhost:5000/api/favoritos/${user.id_usuario}`);
-        setLugares(res.data || []);
-      } catch (err) {
-        console.error(err);
-        if (err.response?.status === 404) {
-          setError("");
-          setLugares([]);
-        } else {
-          setError("Error al conectar con el servidor.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFavoritos();
   }, [user, navigate]);
 
-  const eliminarFavorito = async (idLugar) => {
+  const handleEliminarFavorito = async (idLugar) => {
+    setEliminandoId(idLugar); // Marcar este botón como cargando
     try {
-      // ✅ CORRECCIÓN: Template literal con backticks
-      await axios.delete(`http://localhost:5000/api/favoritos/${user.id_usuario}/${idLugar}`);
-      setLugares(lugares.filter(lugar => lugar.id_lugar !== idLugar));
+      await eliminarFavorito(idLugar);
     } catch (error) {
       console.error("Error al eliminar favorito:", error);
       alert("Error al eliminar el favorito");
+    } finally {
+      setEliminandoId(null); // Quitar el estado de carga
     }
   };
 
+  // Loading solo para la carga inicial
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-pink-600 text-xl font-semibold">
-        Cargando favoritos...
+      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-pink-600 text-xl font-semibold">Cargando favoritos...</p>
+        </div>
       </div>
     );
   }
@@ -60,7 +45,6 @@ const Favoritos = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Botón volver */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-pink-600 font-semibold mb-6 hover:text-pink-800 transition"
@@ -75,8 +59,11 @@ const Favoritos = () => {
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-          {lugares.length === 0 ? (
+          {favoritos.length === 0 ? (
             <div className="text-center py-12">
+              <div className="bg-pink-50 rounded-full p-6 inline-block mb-4">
+                <FaHeart className="text-pink-400 text-4xl" />
+              </div>
               <p className="text-gray-600 text-lg mb-6">
                 No tienes lugares favoritos aún.
               </p>
@@ -90,34 +77,51 @@ const Favoritos = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lugares.map((lugar) => (
+              {favoritos.map((lugar) => (
                 <div
                   key={lugar.id_lugar}
                   className="bg-white border-2 border-pink-100 rounded-xl shadow-md p-5 hover:shadow-lg transition"
                 >
-                  {lugar.imagen_lugar && (
-                    <img
-                      // ✅ CORRECCIÓN: Añadido prefijo del servidor si es ruta relativa
-                      src={
-                        lugar.imagen_lugar.startsWith('http') 
-                          ? lugar.imagen_lugar 
-                          : `http://localhost:5000${lugar.imagen_lugar}`
-                      }
-                      alt={lugar.nombre_lugar}
-                      className="w-full h-40 object-cover rounded-lg mb-4"
-                    />
-                  )}
-                  
+                  {/* Imagen del lugar */}
+                  <div className="relative mb-4">
+                    {lugar.imagen_lugar ? (
+                      <img
+                        src={
+                          lugar.imagen_lugar.startsWith("http")
+                            ? lugar.imagen_lugar
+                            : `http://localhost:5000${lugar.imagen_lugar}`
+                        }
+                        alt={lugar.nombre_lugar}
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-40 bg-gradient-to-r from-pink-200 to-purple-200 rounded-lg 
+                                      flex items-center justify-center">
+                        <FaStore className="text-pink-400 text-4xl" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Información del lugar */}
                   <div className="flex justify-between items-start mb-3">
                     <h2 className="font-bold text-xl text-pink-600">
                       {lugar.nombre_lugar}
                     </h2>
                     <button
-                      onClick={() => eliminarFavorito(lugar.id_lugar)}
-                      className="text-red-500 text-2xl hover:scale-110 transition"
-                      title="Eliminar de favoritos"
+                      onClick={() => handleEliminarFavorito(lugar.id_lugar)}
+                      disabled={eliminandoId === lugar.id_lugar}
+                      className={`text-2xl transition ${
+                        eliminandoId === lugar.id_lugar 
+                          ? "text-gray-400 cursor-not-allowed" 
+                          : "text-red-500 hover:scale-110"
+                      }`}
+                      title={eliminandoId === lugar.id_lugar ? "Eliminando..." : "Eliminar de favoritos"}
                     >
-                      <FaHeart />
+                      {eliminandoId === lugar.id_lugar ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
+                      ) : (
+                        <FaHeart />
+                      )}
                     </button>
                   </div>
 
@@ -125,26 +129,19 @@ const Favoritos = () => {
                     <FaMapMarkerAlt className="text-pink-500" />
                     {lugar.direccion_lugar}
                   </p>
-                  
+
                   <p className="text-gray-500 text-sm mb-3">
                     Localidad: {lugar.localidad_lugar}
                   </p>
 
-                  <div className="flex items-center gap-1 mb-4">
+                  <div className="flex items-center gap-1">
                     <FaStar className="text-yellow-400" />
                     <span className="text-sm font-semibold text-gray-700">
-                      {lugar.promedio_estrellas || "Sin reseñas"}
+                      {lugar.promedio_estrellas
+                        ? `${lugar.promedio_estrellas}/5`
+                        : "Sin reseñas"}
                     </span>
                   </div>
-
-                  <button
-                    // ✅ CORRECCIÓN: Template literal con backticks
-                    onClick={() => navigate(`/lugar/${lugar.id_lugar}`)}
-                    className="w-full px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 
-                               text-white font-semibold rounded-lg hover:opacity-90 transition"
-                  >
-                    Ver Detalles
-                  </button>
                 </div>
               ))}
             </div>
