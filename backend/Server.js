@@ -1,6 +1,6 @@
 // Server.js
 import dotenv from 'dotenv';
-dotenv.config(); // ✅ cargar variables de entorno al inicio
+dotenv.config();
 
 import express from "express";
 import cors from "cors";
@@ -35,12 +35,13 @@ const __dirname = path.dirname(__filename);
 
 // ===== Middlewares =====
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// servir las imágenes subidas (carpeta uploads dentro de backend)
+// servir imágenes
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ===== Rutas principales =====
+// ===== Rutas =====
 app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/bitacoras", bitacoraRoutes);
@@ -57,19 +58,28 @@ app.use("/api/tipoRol", tipoRolRoutes);
 app.use("/api/tipoServicio", tipoServicioRoutes);
 app.use("/api/recuperar-cuenta", recuperarCuentaRoutes);
 app.use("/api/reset-password", resetPasswordRoutes);
-
-// Rutas de lugares
 app.use("/api/lugares", lugarRoutes);
 
 // ===== Ruta raíz =====
 app.get("/", (req, res) => {
-  res.send(" Servidor FindyRate corriendo correctamente 💗");
+  res.send("Servidor FindyRate corriendo correctamente 💗");
 });
 
-// ===== Manejo de rutas no encontradas 
+// ===== Middleware 404 =====
 app.use((req, res) => {
   res.status(404).json({ message: "Ruta no encontrada" });
 });
 
-// ===== Servidor escuchando =====
-app.listen(PORT, () => console.log(` Servidor ejecutándose en el puerto ${PORT}`));
+// ===== Middleware de manejo global de errores =====
+app.use((error, req, res, next) => {
+  console.error("Error global:", error);
+  res.status(500).json({
+    success: false,
+    message: "Error interno del servidor"
+  });
+});
+
+// ===== Iniciar servidor =====
+app.listen(PORT, () =>
+  console.log(`Servidor ejecutándose en el puerto ${PORT}`)
+);

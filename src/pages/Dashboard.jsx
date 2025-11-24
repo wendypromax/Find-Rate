@@ -29,7 +29,7 @@ const Dashboard = () => {
   // Usar el context de favoritos
   const { favoritos, esFavorito, toggleFavorito } = useFavoritos();
 
-  // Obtener usuario almacenado en localStorage con manejo de errores mejorado
+  // Obtener usuario almacenado en localStorage
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
@@ -70,11 +70,9 @@ const Dashboard = () => {
     const loadUser = () => {
       try {
         const storedUser = localStorage.getItem("user");
-        console.log("Datos de usuario en localStorage:", storedUser);
         
         if (storedUser) {
           const userData = JSON.parse(storedUser);
-          console.log("Usuario parseado:", userData);
           
           // Normalizar las propiedades del usuario
           const normalizedUser = {
@@ -229,7 +227,12 @@ const Dashboard = () => {
     setSearchResult(resultado);
   };
 
-  // Ver detalle del lugar
+  // Buscar automáticamente cuando cambian los filtros
+  useEffect(() => {
+    handleSearch();
+  }, [search, filtroLocalidad, lugares]);
+
+  // Ver detalle del lugar - FUNCIÓN CORREGIDA
   const verDetalle = async (lugar) => {
     if (!user) {
       setMensaje("Debes iniciar sesión para ver detalles");
@@ -247,11 +250,13 @@ const Dashboard = () => {
     setEliminandoResenia(null);
 
     try {
+      console.log(`🔍 Cargando reseñas para lugar ID: ${lugar.id_lugar}`);
+      
       const resResenias = await axios.get(
         `http://localhost:5000/api/resenias/lugar/${lugar.id_lugar}`
       );
       
-      console.log("Datos de reseñas recibidos:", resResenias.data.resenias);
+      console.log("✅ Reseñas cargadas:", resResenias.data);
       
       const reseñasProcesadas = resResenias.data.resenias.map(resenia => ({
         ...resenia,
@@ -260,7 +265,9 @@ const Dashboard = () => {
       
       setResenias(reseñasProcesadas || []);
     } catch (error) {
-      console.error("Error al cargar reseñas:", error);
+      console.error("❌ Error al cargar reseñas:", error);
+      console.error("🔍 Detalles:", error.response?.data || error.message);
+      setMensaje("❌ Error al cargar las reseñas. Intenta nuevamente.");
       setResenias([]);
     } finally {
       setLoadingDetalle(false);
@@ -277,7 +284,7 @@ const Dashboard = () => {
     setEliminandoResenia(null);
   };
 
-  // Enviar reseña
+  // Enviar reseña - FUNCIÓN COMPLETAMENTE CORREGIDA
   const handleEnviarResenia = async (e) => {
     e.preventDefault();
 
@@ -286,7 +293,7 @@ const Dashboard = () => {
       return;
     }
 
-    if (!comentario || calificacion === 0) {
+    if (!comentario.trim() || calificacion === 0) {
       setMensaje("Por favor escribe un comentario y selecciona una calificación.");
       return;
     }
@@ -295,18 +302,39 @@ const Dashboard = () => {
     setMensaje("");
 
     try {
+      // Validaciones exhaustivas
+      if (!lugarSeleccionado || !lugarSeleccionado.id_lugar) {
+        throw new Error("No se ha seleccionado un lugar válido");
+      }
+
+      if (!user.id_usuario) {
+        throw new Error("Usuario no válido - ID de usuario faltante");
+      }
+
+      // Preparar datos asegurando tipos correctos
+      const reseñaData = {
+        comentario_resenia: comentario.trim(),
+        calificacion_resenia: calificacion.toString(),
+        id_usuariofk: parseInt(user.id_usuario),
+        id_lugarfk: parseInt(lugarSeleccionado.id_lugar)
+      };
+
+      console.log("🚀 Enviando reseña:", reseñaData);
+
       const res = await fetch("http://localhost:5000/api/resenias", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          comentario_resenia: comentario,
-          calificacion_resenia: calificacion,
-          id_usuariofk: user.id_usuario,
-          id_lugarfk: lugarSeleccionado.id_lugar,
-        }),
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reseñaData),
       });
 
       const data = await res.json();
+      console.log("📨 Respuesta del servidor:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || `Error ${res.status}`);
+      }
 
       if (data.success) {
         setMensaje("✅ Reseña publicada correctamente");
@@ -314,30 +342,17 @@ const Dashboard = () => {
         setCalificacion(0);
         setMostrarFormulario(false);
 
-        if (data.resenia) {
-          const nuevaReseniaConUsuario = {
-            ...data.resenia,
-            nombre_usuario: data.resenia.nombre_usuario || user.nombre_usuario || user.nombre || "Usuario"
-          };
-          setResenias(prev => [nuevaReseniaConUsuario, ...prev]);
-        } else {
-          const resResenias = await axios.get(
-            `http://localhost:5000/api/resenias/lugar/${lugarSeleccionado.id_lugar}`
-          );
-          
-          const reseñasProcesadas = resResenias.data.resenias.map(resenia => ({
-            ...resenia,
-            nombre_usuario: resenia.nombre_usuario || user.nombre_usuario || user.nombre || "Usuario"
-          }));
-          
-          setResenias(reseñasProcesadas || []);
-        }
+        // Recargar las reseñas después de publicar
+        setTimeout(() => {
+          verDetalle(lugarSeleccionado);
+        }, 500);
+        
       } else {
-        setMensaje("❌ " + data.message);
+        setMensaje("❌ " + (data.message || "Error al publicar reseña"));
       }
     } catch (error) {
-      console.error(error);
-      setMensaje("❌ Error al conectar con el servidor");
+      console.error("💥 Error completo:", error);
+      setMensaje(`❌ Error: ${error.message || "No se pudo publicar la reseña"}`);
     } finally {
       setEnviando(false);
     }
@@ -347,7 +362,7 @@ const Dashboard = () => {
   const iniciarEdicion = (resenia) => {
     setEditandoResenia(resenia.id_resenia);
     setComentarioEditado(resenia.comentario_resenia);
-    setCalificacionEditada(resenia.calificacion_resenia);
+    setCalificacionEditada(parseInt(resenia.calificacion_resenia));
     setEliminandoResenia(null);
   };
 
@@ -360,7 +375,7 @@ const Dashboard = () => {
 
   // Guardar edición de reseña
   const guardarEdicion = async (reseniaId) => {
-    if (!comentarioEditado || calificacionEditada === 0) {
+    if (!comentarioEditado.trim() || calificacionEditada === 0) {
       setMensaje("Por favor completa todos los campos");
       return;
     }
@@ -370,8 +385,8 @@ const Dashboard = () => {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          comentario_resenia: comentarioEditado,
-          calificacion_resenia: calificacionEditada,
+          comentario_resenia: comentarioEditado.trim(),
+          calificacion_resenia: calificacionEditada.toString(),
         }),
       });
 
@@ -385,8 +400,8 @@ const Dashboard = () => {
           resenia.id_resenia === reseniaId 
             ? { 
                 ...resenia, 
-                comentario_resenia: comentarioEditado,
-                calificacion_resenia: calificacionEditada
+                comentario_resenia: comentarioEditado.trim(),
+                calificacion_resenia: calificacionEditada.toString()
               }
             : resenia
         ));
@@ -446,7 +461,7 @@ const Dashboard = () => {
   // Calcular promedio de calificación
   const calcularPromedio = () => {
     if (resenias.length === 0) return 0;
-    const suma = resenias.reduce((acc, r) => acc + r.calificacion_resenia, 0);
+    const suma = resenias.reduce((acc, r) => acc + Number(r.calificacion_resenia || 0), 0);
     return (suma / resenias.length).toFixed(1);
   };
 
@@ -513,7 +528,7 @@ const Dashboard = () => {
     const promedio = calcularPromedio();
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 p-4 md:p-8">
         {/* Botón volver */}
         <button
           onClick={volverAlListado}
@@ -523,21 +538,24 @@ const Dashboard = () => {
         </button>
 
         {/* Información del lugar */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
           {lugarSeleccionado.imagen_lugar && (
             <img
               src={`http://localhost:5000${lugarSeleccionado.imagen_lugar}`}
               alt={lugarSeleccionado.nombre_lugar}
-              className="w-full h-64 object-cover rounded-xl mb-6"
+              className="w-full h-48 md:h-64 object-cover rounded-xl mb-6"
+              onError={(e) => {
+                e.target.src = "https://cdn-icons-png.flaticon.com/512/685/685352.png";
+              }}
             />
           )}
 
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-4xl font-bold text-pink-600 mb-2">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-4xl font-bold text-pink-600 mb-2">
                 {lugarSeleccionado.nombre_lugar}
               </h1>
-              <p className="text-gray-600 flex items-center gap-2 text-lg">
+              <p className="text-gray-600 flex items-center gap-2 text-base md:text-lg">
                 <FaMapMarkerAlt className="text-pink-500" />
                 {lugarSeleccionado.direccion_lugar}
               </p>
@@ -553,7 +571,7 @@ const Dashboard = () => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <FaStar
                   key={star}
-                  className={`w-6 h-6 ${
+                  className={`w-5 h-5 md:w-6 md:h-6 ${
                     star <= Math.round(promedio)
                       ? "text-yellow-400"
                       : "text-gray-300"
@@ -561,7 +579,7 @@ const Dashboard = () => {
                 />
               ))}
             </div>
-            <span className="text-2xl font-bold text-gray-700">{promedio}</span>
+            <span className="text-xl md:text-2xl font-bold text-gray-700">{promedio}</span>
             <span className="text-gray-500">({resenias.length} reseñas)</span>
           </div>
         </div>
@@ -571,9 +589,9 @@ const Dashboard = () => {
           <div className="flex justify-center mb-8">
             <button
               onClick={() => setMostrarFormulario(!mostrarFormulario)}
-              className="px-8 py-3 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-500 
+              className="px-6 py-3 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-500 
                          text-white font-bold rounded-full shadow-lg hover:scale-105 transform 
-                         transition duration-300"
+                         transition duration-300 text-sm md:text-base"
             >
               {mostrarFormulario ? "Cancelar" : "✍ Escribir Reseña"}
             </button>
@@ -582,8 +600,8 @@ const Dashboard = () => {
 
         {/* Formulario de reseña */}
         {mostrarFormulario && isUsuario && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-pink-600 mb-4">
+          <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8 max-w-2xl mx-auto">
+            <h3 className="text-xl md:text-2xl font-bold text-pink-600 mb-4">
               Compartir tu experiencia
             </h3>
 
@@ -591,13 +609,16 @@ const Dashboard = () => {
               <p className="text-blue-700 text-sm">
                 <strong>Publicarás como:</strong> {user.nombre_usuario || user.nombre || "Usuario"}
               </p>
+              <p className="text-blue-700 text-sm mt-1">
+                <strong>Lugar:</strong> {lugarSeleccionado.nombre_lugar}
+              </p>
             </div>
 
             <form onSubmit={handleEnviarResenia} className="flex flex-col gap-4">
               {/* Estrellas */}
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  Calificación
+                  Calificación *
                 </label>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
@@ -613,53 +634,74 @@ const Dashboard = () => {
                     />
                   ))}
                 </div>
+                <p className="text-gray-500 text-sm mt-1">
+                  {calificacion > 0 ? `Seleccionado: ${calificacion} estrellas` : "Selecciona una calificación"}
+                </p>
               </div>
 
               {/* Comentario */}
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  Tu comentario
+                  Tu comentario *
                 </label>
                 <textarea
                   placeholder="Cuéntanos sobre tu experiencia en este lugar..."
                   value={comentario}
                   onChange={(e) => setComentario(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
-                  rows={5}
+                  rows={4}
+                  required
                 />
+                <p className="text-gray-500 text-sm mt-1">
+                  {comentario.length}/500 caracteres
+                </p>
               </div>
 
               {/* Mensaje */}
               {mensaje && (
-                <p
-                  className={`text-sm ${
-                    mensaje.startsWith("❌") ? "text-red-600" : "text-green-600"
-                  }`}
-                >
+                <div className={`p-3 rounded-lg ${
+                  mensaje.startsWith("❌") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                }`}>
                   {mensaje}
-                </p>
+                </div>
               )}
 
               {/* Botón enviar */}
               <button
                 type="submit"
-                disabled={enviando}
+                disabled={enviando || !comentario.trim() || calificacion === 0}
                 className="px-6 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 
-                           text-white font-bold rounded-full shadow-lg hover:opacity-90 transition"
+                           text-white font-bold rounded-full shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {enviando ? "Publicando..." : "Publicar Reseña"}
+                {enviando ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Publicando...
+                  </div>
+                ) : (
+                  "Publicar Reseña"
+                )}
               </button>
+
+              <p className="text-gray-500 text-sm text-center">
+                * Campos obligatorios
+              </p>
             </form>
           </div>
         )}
 
         {/* Lista de reseñas */}
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-pink-600 mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-pink-600 mb-6">
             Reseñas de clientes
           </h2>
 
-          {resenias.length === 0 ? (
+          {loadingDetalle ? (
+            <div className="bg-white rounded-xl shadow-md p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Cargando reseñas...</p>
+            </div>
+          ) : resenias.length === 0 ? (
             <div className="bg-white rounded-xl shadow-md p-8 text-center">
               <p className="text-gray-500 text-lg">
                 Aún no hay reseñas. ¡Sé el primero en compartir tu experiencia!
@@ -676,10 +718,10 @@ const Dashboard = () => {
                 return (
                   <div
                     key={resenia.id_resenia}
-                    className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
+                    className="bg-white rounded-xl shadow-md p-4 md:p-6 hover:shadow-lg transition"
                   >
                     {/* Encabezado de la reseña */}
-                    <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col md:flex-row justify-between items-start mb-3 gap-3">
                       <div className="flex items-center gap-3 flex-1">
                         {/* Avatar del usuario */}
                         <div 
@@ -690,7 +732,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-gray-800 text-lg">
+                            <p className="font-semibold text-gray-800 text-base md:text-lg">
                               {displayName}
                             </p>
                             {esMiResenia && (
@@ -704,20 +746,22 @@ const Dashboard = () => {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
+                              hour: '2-digit',
+                              minute: '2-digit'
                             })}
                           </p>
                         </div>
                       </div>
                       
                       {/* Contenedor de estrellas y botones */}
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-start md:items-end gap-2 w-full md:w-auto">
                         {/* Estrellas de calificación */}
                         <div className="flex">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <FaStar
                               key={star}
-                              className={`w-5 h-5 ${
-                                star <= resenia.calificacion_resenia
+                              className={`w-4 h-4 md:w-5 md:h-5 ${
+                                star <= parseInt(resenia.calificacion_resenia)
                                   ? "text-yellow-400"
                                   : "text-gray-300"
                               }`}
@@ -848,7 +892,7 @@ const Dashboard = () => {
           <FaBars />
         </button>
 
-        <h1 className="text-2xl font-bold text-pink-600">
+        <h1 className="text-xl md:text-2xl font-bold text-pink-600 text-center">
           {isAdmin
             ? "Panel de Administración"
             : isEmpresario
@@ -860,12 +904,12 @@ const Dashboard = () => {
         <div className="relative group flex items-center gap-3">
           <div
             onClick={() => navigate("/profile")}
-            className="w-12 h-12 rounded-full overflow-hidden border-4 border-pink-400 cursor-pointer hover:opacity-90 transition flex items-center justify-center"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-4 border-pink-400 cursor-pointer hover:opacity-90 transition flex items-center justify-center"
           >
             {profilePic ? (
               <img src={profilePic} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xl">
+              <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-lg md:text-xl">
                 <FaUser />
               </div>
             )}
@@ -912,7 +956,7 @@ const Dashboard = () => {
                       setMenuOpen(false);
                       navigate("/favoritos");
                     }}
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-400 to-red-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-400 to-red-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
                   >
                     <FaHeart /> Lugares Favoritos
                   </button>
@@ -921,7 +965,7 @@ const Dashboard = () => {
                       setMenuOpen(false);
                       navigate("/reseñas");
                     }}
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
                   >
                     <FaStar /> Reseñas Realizadas
                   </button>
@@ -935,7 +979,7 @@ const Dashboard = () => {
                       setMenuOpen(false);
                       navigate("/mis-lugares");
                     }}
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
                   >
                     <FaStore /> Ver mis lugares
                   </button>
@@ -944,7 +988,7 @@ const Dashboard = () => {
                       setMenuOpen(false);
                       navigate("/lugaresform");
                     }}
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-400 to-teal-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-400 to-teal-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
                   >
                     <FaPlus /> Agregar Lugar
                   </button>
@@ -957,7 +1001,7 @@ const Dashboard = () => {
                     setMenuOpen(false);
                     navigate("/admin/usuarios");
                   }}
-                  className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-400 to-blue-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+                  className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-400 to-blue-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
                 >
                   <FaUsersCog /> Gestionar Usuarios
                 </button>
@@ -967,7 +1011,7 @@ const Dashboard = () => {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-400 to-orange-400 text-white font-bold rounded-2xl hover:opacity-90 transition"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-400 to-orange-400 text-white font-bold rounded-2xl hover:opacity-90 transition text-sm md:text-base"
           >
             <FaSignOutAlt /> Cerrar Sesión
           </button>
@@ -975,24 +1019,26 @@ const Dashboard = () => {
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 flex flex-col items-center justify-start mt-6 space-y-6 px-4">
+      <main className="flex-1 flex flex-col items-center justify-start mt-4 md:mt-6 space-y-4 md:space-y-6 px-4 pb-8">
         {/* Buscador */}
-        <div className="flex flex-wrap items-center gap-3 bg-white shadow-lg rounded-full px-4 py-3 w-full max-w-5xl">
-          <FaSearch className="text-gray-500 text-lg" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 outline-none text-gray-700"
-          />
+        <div className="flex flex-col md:flex-row items-center gap-3 bg-white shadow-lg rounded-2xl md:rounded-full px-4 py-3 w-full max-w-5xl">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <FaSearch className="text-gray-500 text-lg" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Buscar por nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 outline-none text-gray-700 bg-transparent w-full"
+            />
+          </div>
           <select
             value={filtroLocalidad}
             onChange={(e) => setFiltroLocalidad(e.target.value)}
-            className="bg-gray-100 rounded-lg px-3 py-1 text-gray-700 outline-none"
+            className="bg-gray-100 rounded-lg px-3 py-2 text-gray-700 outline-none w-full md:w-auto"
           >
-            <option value="">Localidad</option>
+            <option value="">Todas las localidades</option>
             <option value="Suba">Suba</option>
             <option value="Teusaquillo">Teusaquillo</option>
             <option value="Usaquén">Usaquén</option>
@@ -1000,31 +1046,26 @@ const Dashboard = () => {
             <option value="Kennedy">Kennedy</option>
             <option value="Engativá">Engativá</option>
           </select>
-          <button
-            onClick={handleSearch}
-            className="bg-pink-500 text-white px-6 py-2 rounded-full hover:bg-pink-600 transition"
-          >
-            Buscar
-          </button>
         </div>
 
         {/* Mensaje de favoritos */}
         {mensaje && (
           <div className={`w-full max-w-5xl p-3 rounded-lg text-center ${
-            mensaje.startsWith("❤️") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            mensaje.startsWith("❤️") ? "bg-green-100 text-green-700" : 
+            mensaje.startsWith("❌") ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
           }`}>
             {mensaje}
           </div>
         )}
 
         {/* Contador */}
-        <div className="w-full max-w-5xl mt-4 text-gray-700 font-medium">
+        <div className="w-full max-w-5xl text-gray-700 font-medium">
           {(searchResult ?? lugares).length}{" "}
-          {(searchResult ?? lugares).length === 1 ? "tienda" : "tiendas"} disponibles
+          {(searchResult ?? lugares).length === 1 ? "lugar" : "lugares"} disponibles
         </div>
 
         {/* Grid de lugares */}
-        <div className="w-full max-w-5xl mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-2">
+        <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 p-2">
           {(searchResult ?? lugares).length > 0 ? (
             (searchResult ?? lugares).map((lugar) => (
               <div
@@ -1042,16 +1083,20 @@ const Dashboard = () => {
                     }
                     alt={lugar.nombre_lugar}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://cdn-icons-png.flaticon.com/512/685/685352.png";
+                    }}
                   />
                 </div>
 
                 {/* Información */}
                 <div className="p-4 flex flex-col gap-2">
-                  <h3 className="text-lg font-bold text-pink-600">
+                  <h3 className="text-lg font-bold text-pink-600 truncate">
                     {lugar.nombre_lugar}
                   </h3>
                   <p className="text-gray-500 text-sm flex items-center gap-1">
-                    <FaMapMarkerAlt className="text-pink-500" /> {lugar.direccion_lugar}
+                    <FaMapMarkerAlt className="text-pink-500 flex-shrink-0" /> 
+                    <span className="truncate">{lugar.direccion_lugar}</span>
                   </p>
                   <p className="text-gray-500 text-sm">
                     Localidad: {lugar.localidad_lugar}
@@ -1071,9 +1116,14 @@ const Dashboard = () => {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 mt-10 col-span-full text-center">
-              No se encontraron lugares.
-            </p>
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg mb-4">
+                {lugares.length === 0 ? "Cargando lugares..." : "No se encontraron lugares."}
+              </p>
+              {lugares.length === 0 && (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto"></div>
+              )}
+            </div>
           )}
         </div>
       </main>
