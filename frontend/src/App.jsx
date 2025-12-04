@@ -45,31 +45,33 @@ function App() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 shadow-sm bg-white">
-        <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 bg-clip-text text-transparent flex items-center">
-            Buscar y calificar
+      <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="relative w-10 h-10 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <span className="text-white text-lg font-bold">★</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Find<span className="text-indigo-600">&</span>Rate
           </h1>
-          <span className="text-yellow-400 text-2xl">⭐</span>
         </div>
 
-        <nav className="flex space-x-6 text-gray-700 font-medium">
+        <nav className="flex space-x-1 md:space-x-2 items-center">
           {/* Siempre visibles */}
-          <Link to="/" className="hover:text-pink-600 transition">Inicio</Link>
-          <Link to="/conocenos" className="hover:text-pink-600 transition">Conócenos</Link>
+          <Link to="/" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Inicio</Link>
+          <Link to="/conocenos" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Conócenos</Link>
 
           {/* Si NO hay sesión → mostrar login y registro */}
           {!user && (
             <>
-              <Link to="/registro" className="hover:text-pink-600 transition">Registro</Link>
-              <Link to="/login" className="hover:text-pink-600 transition">Login</Link>
+              <Link to="/registro" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Registro</Link>
+              <Link to="/login" className="ml-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition duration-200 font-semibold">Login</Link>
             </>
           )}
 
           {/* Si hay sesión → mostrar solo "Mi Panel" */}
           {user && (
             <>
-              <Link to="/dashboard" className="hover:text-pink-600 transition">Mi Panel</Link>
+              <Link to="/dashboard" className="ml-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition duration-200 font-semibold">Mi Panel</Link>
             </>
           )}
         </nav>
