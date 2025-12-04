@@ -61,19 +61,65 @@ const Conocenos = () => {
           {/* Equipo */}
           <section id="equipo" className="mt-12">
             <h3 className="text-2xl font-semibold text-slate-900 mb-6">Nuestro Equipo</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { name: 'Wendy Mora', role: 'Fundadora' },
-                { name: 'Alex C', role: 'Frontend' },
-                { name: 'Dev Team', role: 'Backend' },
-                { name: 'Comunidad', role: 'Usuarios' }
-              ].map((member, i) => (
-                <div key={i} className="bg-white rounded-lg p-4 text-center border border-slate-100 shadow-sm">
-                  <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold mb-3">{member.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
-                  <p className="font-semibold text-slate-900">{member.name}</p>
-                  <p className="text-sm text-slate-600">{member.role}</p>
+
+            {/* Fundadores */}
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-slate-800 mb-3">Fundadores</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                {[
+                  'Wendy Mora',
+                  'Emily Diaz',
+                  'Jesus Rivera',
+                  'Danna Miznasa',
+                  'Sofia Herrera'
+                ].map((name, i) => (
+                  <div key={i} className="bg-white rounded-lg p-4 text-center border border-slate-100 shadow-sm">
+                    <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold mb-3">{name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                    <p className="font-semibold text-slate-900">{name}</p>
+                    <p className="text-sm text-slate-600">Fundadora</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Equipos técnicos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 bg-white rounded-lg border border-slate-100 shadow-sm text-center">
+                <h5 className="font-semibold text-slate-900 mb-4">Frontend</h5>
+                {['Danna Miznasa','Emily Diaz'].map((name,i)=> (
+                  <div key={i} className="flex items-center gap-3 justify-center mb-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">{name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                    <div className="text-left">
+                      <p className="font-semibold text-slate-900">{name}</p>
+                      <p className="text-sm text-slate-600">Frontend</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 bg-white rounded-lg border border-slate-100 shadow-sm text-center">
+                <h5 className="font-semibold text-slate-900 mb-4">Backend</h5>
+                {['Wendy Mora','Jesus Rivera'].map((name,i)=> (
+                  <div key={i} className="flex items-center gap-3 justify-center mb-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">{name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+                    <div className="text-left">
+                      <p className="font-semibold text-slate-900">{name}</p>
+                      <p className="text-sm text-slate-600">Backend</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 bg-white rounded-lg border border-slate-100 shadow-sm text-center">
+                <h5 className="font-semibold text-slate-900 mb-4">QA</h5>
+                <div className="flex items-center gap-3 justify-center mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold">SH</div>
+                  <div className="text-left">
+                    <p className="font-semibold text-slate-900">Sofia Herrera</p>
+                    <p className="text-sm text-slate-600">QA</p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
           </section>
 
