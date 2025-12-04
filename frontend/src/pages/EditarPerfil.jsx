@@ -35,7 +35,7 @@ const EditarPerfil = () => {
 
     const fetchPerfil = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/auth/${user.id_usuario}`);
+        const res = await fetch(`http://localhost:5003/api/auth/${user.id_usuario}`);
         const data = await res.json();
 
         if (res.ok && data) {
@@ -80,7 +80,7 @@ const EditarPerfil = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/${user.id_usuario}`, {
+      const res = await fetch(`http://localhost:5003/api/auth/${user.id_usuario}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

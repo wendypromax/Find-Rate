@@ -31,7 +31,7 @@ export const FavoritosProvider = ({ children }) => {
     try {
       console.log("Cargando favoritos para usuario:", user.id_usuario);
       const res = await axios.get(
-        `http://localhost:5000/api/favoritos/usuario/${user.id_usuario}`
+        `http://localhost:5003/api/favoritos/usuario/${user.id_usuario}`
       );
       console.log("Favoritos cargados:", res.data);
       setFavoritos(res.data || []);
@@ -63,13 +63,13 @@ export const FavoritosProvider = ({ children }) => {
       if (yaEsFavorito) {
         // Eliminar de favoritos
         await axios.delete(
-          `http://localhost:5000/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
+          `http://localhost:5003/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
         );
         setFavoritos(prev => prev.filter(fav => fav.id_lugar !== idLugar));
       } else {
         // Agregar a favoritos
         await axios.post(
-          `http://localhost:5000/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
+          `http://localhost:5003/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
         );
         setFavoritos(prev => [...prev, lugar]);
       }
@@ -90,7 +90,7 @@ export const FavoritosProvider = ({ children }) => {
     setOperacionLoading(true); // Solo para esta operación
     try {
       await axios.delete(
-        `http://localhost:5000/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
+        `http://localhost:5003/api/favoritos/usuario/${user.id_usuario}/lugar/${idLugar}`
       );
       setFavoritos(prev => prev.filter(fav => fav.id_lugar !== idLugar));
     } catch (error) {

@@ -19,7 +19,7 @@ const LugarGridCard = ({
         <img
           src={
             lugar.imagen_lugar
-              ? `http://localhost:5000${lugar.imagen_lugar}`
+              ? `http://localhost:5003${lugar.imagen_lugar}`
               : "https://cdn-icons-png.flaticon.com/512/685/685352.png"
           }
           alt={lugar.nombre_lugar}

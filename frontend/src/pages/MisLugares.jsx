@@ -21,7 +21,7 @@ const MisLugares = () => {
       try {
         if (!user?.id_usuario) return;
         const res = await axios.get(
-          `http://localhost:5000/api/lugares/empresario/${user.id_usuario}`
+          `http://localhost:5003/api/lugares/empresario/${user.id_usuario}`
         );
         setLugares(res.data.lugares || []);
       } catch (error) {

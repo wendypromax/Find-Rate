@@ -70,7 +70,7 @@ const Registro = () => {
 
       console.log("👉 Enviando al backend:", payload);
 
-      const res = await fetch("http://localhost:5000/api/auth/registro", {
+      const res = await fetch("http://localhost:5003/api/auth/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

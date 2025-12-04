@@ -19,7 +19,7 @@ const PublicarResenia = ({ idLugar, idUsuario }) => {
     setMensaje("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/resenias", {
+      const res = await fetch("http://localhost:5003/api/resenias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

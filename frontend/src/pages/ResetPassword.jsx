@@ -35,7 +35,7 @@ const ResetPassword = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/reset-password/${token}`,
+        `http://localhost:5003/api/reset-password/${token}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

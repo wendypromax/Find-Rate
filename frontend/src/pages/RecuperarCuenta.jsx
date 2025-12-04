@@ -22,7 +22,7 @@ const RecuperarCuenta = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/recuperar-cuenta", {
+      const response = await fetch("http://localhost:5003/api/recuperar-cuenta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo }),

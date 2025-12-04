@@ -49,7 +49,7 @@ const LugarCard = ({ lugar }) => {
             src={
               lugar.imagen_lugar.startsWith("http")
                 ? lugar.imagen_lugar
-                : `http://localhost:5000${lugar.imagen_lugar}`
+                : `http://localhost:5003${lugar.imagen_lugar}`
             }
             alt={lugar.nombre_lugar}
             className="w-full h-40 object-cover rounded-lg group-hover:opacity-90 transition"

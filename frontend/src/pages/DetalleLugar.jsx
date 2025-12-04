@@ -26,11 +26,11 @@ const DetalleLugar = () => {
     const fetchData = async () => {
       try {
         // Obtener datos del lugar
-        const resLugar = await axios.get(`http://localhost:5000/api/lugares/${id}`);
+        const resLugar = await axios.get(`http://localhost:5003/api/lugares/${id}`);
         setLugar(resLugar.data.lugar);
 
         // Obtener reseñas del lugar
-        const resResenias = await axios.get(`http://localhost:5000/api/resenias/lugar/${id}`);
+        const resResenias = await axios.get(`http://localhost:5003/api/resenias/lugar/${id}`);
         setResenias(resResenias.data.resenias || []);
       } catch (error) {
         console.error("Error al cargar datos:", error);
@@ -55,7 +55,7 @@ const DetalleLugar = () => {
     setMensaje("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/resenias", {
+      const res = await fetch("http://localhost:5003/api/resenias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,7 +75,7 @@ const DetalleLugar = () => {
         setMostrarFormulario(false);
         
         // Recargar reseñas
-        const resResenias = await axios.get(`http://localhost:5000/api/resenias/lugar/${id}`);
+        const resResenias = await axios.get(`http://localhost:5003/api/resenias/lugar/${id}`);
         setResenias(resResenias.data.resenias || []);
       } else {
         setMensaje("❌ " + data.message);

@@ -108,7 +108,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchLugares = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/lugares");
+        const res = await axios.get("http://localhost:5003/api/lugares");
         setLugares(res.data.lugares || []);
       } catch (error) {
         console.error("Error al cargar lugares:", error);
@@ -218,7 +218,7 @@ const Dashboard = () => {
 
     try {
       const resResenias = await axios.get(
-        `http://localhost:5000/api/resenias/lugar/${lugar.id_lugar}`
+        `http://localhost:5003/api/resenias/lugar/${lugar.id_lugar}`
       );
       
       const reseñasProcesadas = resResenias.data.resenias.map(resenia => ({
@@ -278,7 +278,7 @@ const Dashboard = () => {
         id_lugarfk: parseInt(lugarSeleccionado.id_lugar)
       };
 
-      const res = await fetch("http://localhost:5000/api/resenias", {
+      const res = await fetch("http://localhost:5003/api/resenias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reseñaData),
@@ -324,7 +324,7 @@ const Dashboard = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/resenias/${reseniaId}`, {
+      const res = await fetch(`http://localhost:5003/api/resenias/${reseniaId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -359,7 +359,7 @@ const Dashboard = () => {
 
   const eliminarResenia = async (reseniaId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/resenias/${reseniaId}`, {
+      const res = await fetch(`http://localhost:5003/api/resenias/${reseniaId}`, {
         method: "DELETE",
       });
 
@@ -460,7 +460,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
           {lugarSeleccionado.imagen_lugar && (
             <img
-              src={`http://localhost:5000${lugarSeleccionado.imagen_lugar}`}
+              src={`http://localhost:5003${lugarSeleccionado.imagen_lugar}`}
               alt={lugarSeleccionado.nombre_lugar}
               className="w-full h-48 md:h-64 object-cover rounded-xl mb-6"
               onError={(e) => {

@@ -20,7 +20,7 @@ const Profile = () => {
     // Cargar datos dependiendo del rol
     if (storedUser.id_tipo_rolfk === 2) {
       // Empresario: obtiene sus lugares
-      fetch(`http://localhost:5000/lugares/${storedUser.id_usuario}`)
+      fetch(`http://localhost:5003/lugares/${storedUser.id_usuario}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) setLugares(data.lugares);
@@ -29,9 +29,9 @@ const Profile = () => {
     } else if (storedUser.id_tipo_rolfk === 3) {
       // Administrador: obtiene todo
       Promise.all([
-        fetch("http://localhost:5000/api/usuarios").then((res) => res.json()),
-        fetch("http://localhost:5000/api/lugares").then((res) => res.json()),
-        fetch("http://localhost:5000/api/resenas").then((res) => res.json()),
+        fetch("http://localhost:5003/api/usuarios").then((res) => res.json()),
+        fetch("http://localhost:5003/api/lugares").then((res) => res.json()),
+        fetch("http://localhost:5003/api/resenas").then((res) => res.json()),
       ])
         .then(([usuariosData, lugaresData, resenasData]) => {
           setUsuarios(usuariosData.usuarios || []);
@@ -52,7 +52,7 @@ const Profile = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/auth/${user.id_usuario}`,
+        `http://localhost:5003/api/auth/${user.id_usuario}`,
         { method: "DELETE" }
       );
 

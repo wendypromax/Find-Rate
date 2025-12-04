@@ -55,7 +55,7 @@ const LugaresForm = () => {
         formData.append("id_usuariofk", user.id_usuario);
         formData.append("imagen_lugar", imagen_lugar);
 
-        res = await fetch("http://localhost:5000/api/lugares/con-imagen", {
+        res = await fetch("http://localhost:5003/api/lugares/con-imagen", {
           method: "POST",
           body: formData,
         });
@@ -70,7 +70,7 @@ const LugaresForm = () => {
           id_usuariofk: user.id_usuario,
         };
 
-        res = await fetch("http://localhost:5000/api/lugares", {
+        res = await fetch("http://localhost:5003/api/lugares", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(datosLugar),
