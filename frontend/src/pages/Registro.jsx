@@ -95,81 +95,87 @@ const Registro = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-pink-100 via-pink-50 to-yellow-50">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-pink-200 via-pink-100 to-yellow-100">
       <div className="flex justify-center items-center flex-grow p-6">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 text-center">
           <img src={logo} alt="Find & Rate" className="mx-auto mb-3 w-40" />
           <p className="text-sm text-gray-600 mb-6">Crea tu cuenta y descubre los mejores servicios</p>
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <div className="flex justify-between gap-4 mb-4">
-                <button
-                  type="button"
-                  onClick={() => handleTipoChange("usuario")}
-                  className={`flex-1 btn-secondary ${formData.tipoUsuario === "usuario" ? "ring-2 ring-pink-300" : ""}`}
-                >
-                  👤 Usuario
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTipoChange("empresario")}
-                  className={`flex-1 btn-secondary ${formData.tipoUsuario === "empresario" ? "ring-2 ring-pink-300" : ""}`}
-                >
-                  🏢 Empresario
-                </button>
-              </div>
+          <div className="flex justify-between mb-6 gap-4">
+            <button
+              type="button"
+              onClick={() => handleTipoChange("usuario")}
+              className={`flex flex-col items-center justify-center flex-1 p-4 border rounded-xl cursor-pointer transition ${
+                formData.tipoUsuario === "usuario" ? "border-pink-500 shadow-md text-pink-600" : "border-gray-300 text-gray-600"
+              }`}
+            >
+              <div className="mb-1 text-2xl">👤</div>
+              <span className="text-sm font-semibold">Usuario</span>
+            </button>
 
-              <input type="text" name="num_doc_usuario" placeholder="Número de documento" value={formData.num_doc_usuario} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.num_doc_usuario && <p className="text-red-500 text-xs">{errors.num_doc_usuario}</p>}
-
-              <input type="text" name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
-
-              <input type="text" name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.apellido && <p className="text-red-500 text-xs">{errors.apellido}</p>}
-
-              <input type="email" name="email" placeholder="Correo electrónico" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
-
-              <input type="tel" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} maxLength="15" className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.telefono && <p className="text-red-500 text-xs">{errors.telefono}</p>}
-
-              <input type="password" name="password" placeholder="Contraseña" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-
-              <input type="password" name="confirmPassword" placeholder="Confirmar contraseña" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
-
-              <input type="number" name="edad" placeholder="Edad" value={formData.edad} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300" />
-              {errors.edad && <p className="text-red-500 text-xs">{errors.edad}</p>}
-
-              <select name="genero" value={formData.genero} onChange={handleChange} className="w-full px-4 py-2 border border-pink-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                <option value="">Género</option>
-                <option value="mujer">Mujer</option>
-                <option value="hombre">Hombre</option>
-                <option value="otro">Otro</option>
-              </select>
-              {errors.genero && <p className="text-red-500 text-xs">{errors.genero}</p>}
-
-              <div className="flex items-center text-xs gap-2">
-                <input type="checkbox" id="terms" required />
-                <label htmlFor="terms" className="text-gray-600">
-                  Acepto los <Link to="/terminos" className="text-pink-600 underline hover:text-pink-800">términos</Link> y la <Link to="/privacidad" className="text-pink-600 underline hover:text-pink-800">política</Link>.
-                </label>
-              </div>
-
-              {errors.general && <div className="bg-red-100 text-red-700 p-2 rounded text-sm">{errors.general}</div>}
-              {successMessage && <div className="bg-green-100 text-green-700 p-2 rounded text-sm">{successMessage}</div>}
-
-              <button type="submit" disabled={loading} className={`w-full py-3 rounded-lg font-bold text-white ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 transition-all"}`}>
-                {loading ? "Registrando..." : "Registrarme"}
-              </button>
-
-              <p className="text-center text-sm text-gray-600 mt-3">
-                ¿Ya tienes cuenta? <Link to="/login" className="text-pink-600 underline hover:text-pink-800">Inicia sesión</Link>
-              </p>
-            </form>
+            <button
+              type="button"
+              onClick={() => handleTipoChange("empresario")}
+              className={`flex flex-col items-center justify-center flex-1 p-4 border rounded-xl cursor-pointer transition ${
+                formData.tipoUsuario === "empresario" ? "border-pink-500 shadow-md text-pink-600" : "border-gray-300 text-gray-600"
+              }`}
+            >
+              <div className="mb-1 text-2xl">🏢</div>
+              <span className="text-sm font-semibold">Empresario</span>
+            </button>
           </div>
+
+          {errors.general && <div className="bg-red-100 text-red-700 p-2 rounded mb-3 text-sm">{errors.general}</div>}
+          {successMessage && <div className="bg-green-100 text-green-700 p-2 rounded mb-3 text-sm">{successMessage}</div>}
+
+          <form className="flex flex-col gap-3 text-left" onSubmit={handleSubmit}>
+            <input type="text" name="num_doc_usuario" placeholder="Número de documento" value={formData.num_doc_usuario} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.num_doc_usuario && <p className="text-red-500 text-xs">{errors.num_doc_usuario}</p>}
+
+            <input type="text" name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
+
+            <input type="text" name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.apellido && <p className="text-red-500 text-xs">{errors.apellido}</p>}
+
+            <input type="email" name="email" placeholder="Correo electrónico" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+
+            <input type="tel" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} maxLength="15" className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.telefono && <p className="text-red-500 text-xs">{errors.telefono}</p>}
+
+            <input type="password" name="password" placeholder="Contraseña" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+
+            <input type="password" name="confirmPassword" placeholder="Confirmar contraseña" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
+
+            <input type="number" name="edad" placeholder="Edad" value={formData.edad} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
+            {errors.edad && <p className="text-red-500 text-xs">{errors.edad}</p>}
+
+            <select name="genero" value={formData.genero} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-full bg-white text-gray-700">
+              <option value="">Género</option>
+              <option value="mujer">Mujer</option>
+              <option value="hombre">Hombre</option>
+              <option value="otro">Otro</option>
+            </select>
+            {errors.genero && <p className="text-red-500 text-xs">{errors.genero}</p>}
+
+            <div className="flex items-center text-xs gap-2">
+              <input type="checkbox" id="terms" required />
+              <label htmlFor="terms" className="text-gray-600">
+                Acepto los <Link to="/terminos" className="text-pink-600 underline hover:text-pink-800">términos</Link> y la <Link to="/privacidad" className="text-pink-600 underline hover:text-pink-800">política</Link>.
+              </label>
+            </div>
+
+            <button type="submit" disabled={loading} className={`w-full py-3 rounded-full font-bold text-white ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-pink-400 via-pink-300 to-yellow-300 hover:scale-105 transition-transform"}`}>
+              {loading ? "Registrando..." : "Registrarme"}
+            </button>
+
+            <p className="text-center text-sm text-gray-600 mt-3">
+              ¿Ya tienes cuenta? <Link to="/login" className="text-pink-600 underline hover:text-pink-800">Inicia sesión</Link>
+            </p>
+          </form>
         </div>
       </div>
 
