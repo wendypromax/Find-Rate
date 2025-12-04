@@ -37,7 +37,8 @@ const MisResenias = () => {
       const response = await axios.get(
         `http://localhost:5003/api/resenias/usuario/${user.id_usuario}`
       );
-      setResenias(response.data);
+      // Extraer el array de reseñas del objeto response
+      setResenias(response.data.resenias || []);
     } catch (error) {
       console.error("Error al cargar reseñas:", error);
       setResenias([]);
