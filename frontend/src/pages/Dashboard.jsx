@@ -2,7 +2,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaStar, FaArrowLeft, FaExclamationTriangle } from "react-icons/fa";
+import { 
+  FaStar, 
+  FaArrowLeft, 
+  FaExclamationTriangle, 
+  FaBars,
+  FaUser,
+  FaHeart,
+  FaMapMarkerAlt,
+  FaEdit,
+  FaTrash,
+  FaCheck,
+  FaTimes,
+  FaStore,
+  FaPlus,
+  FaUsersCog,
+  FaSignOutAlt,
+  FaSearch
+} from "react-icons/fa";
 import { useFavoritos } from "../context/FavoritosContext";
 
 import DashboardHeader from "../components/DashboardHeader";
@@ -14,7 +31,6 @@ import ReviewItem from "../components/ReviewItem";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
 
   // Usar el context de favoritos
   const { favoritos, esFavorito, toggleFavorito } = useFavoritos();
