@@ -84,6 +84,38 @@ router.get("/lugar/:id_lugar", async (req, res) => {
   }
 });
 
+// GET - Obtener reseñas por usuario
+router.get("/usuario/:id_usuario", async (req, res) => {
+  const { id_usuario } = req.params;
+
+  try {
+    const [resenias] = await db.execute(
+      `SELECT 
+        r.id_resenia,
+        r.comentario_resenia,
+        r.calificacion_resenia,
+        r.fecha_resenia,
+        r.hora_resenia,
+        r.id_usuariofk,
+        r.id_lugarfk,
+        l.nombre_lugar,
+        COALESCE(u.nombre_usuario, 'Usuario') as nombre_usuario
+       FROM resenia r 
+       LEFT JOIN usuario u ON r.id_usuariofk = u.id_usuario 
+       LEFT JOIN lugar l ON r.id_lugarfk = l.id_lugar 
+       WHERE r.id_usuariofk = ? 
+       ORDER BY r.fecha_resenia DESC, r.hora_resenia DESC`,
+      [parseInt(id_usuario)]
+    );
+
+    res.json({ success: true, resenias });
+
+  } catch (error) {
+    console.error("💥 Error en GET /api/resenias/usuario:", error);
+    res.status(500).json({ success: false, message: "Error interno servidor" });
+  }
+});
+
 // GET todas
 router.get("/", async (req, res) => {
   try {

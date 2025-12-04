@@ -21,6 +21,7 @@ import Profile from "./pages/Profile";
 import EditarPerfil from "./pages/EditarPerfil";
 import DetalleLugar from "./pages/DetalleLugar";
 import MisLugares from "./pages/MisLugares";
+import MisResenias from "./pages/MisResenias";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -95,6 +96,7 @@ function App() {
         <Route path="/lugaresform" element={<LugaresForm />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/mis-lugares" element={<MisLugares />} />
+        <Route path="/reseñas" element={<MisResenias />} />
         
         {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
         <Route path="/lugar/:id" element={<DetalleLugar />} />
