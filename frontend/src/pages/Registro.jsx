@@ -95,91 +95,100 @@ const Registro = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-pink-200 via-pink-100 to-yellow-100">
-      <div className="flex justify-center items-center flex-grow p-6">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <img src={logo} alt="Find & Rate" className="mx-auto mb-3 w-40" />
-          <p className="text-sm text-gray-600 mb-6">Crea tu cuenta y descubre los mejores servicios</p>
-
-          <div className="flex justify-between mb-6 gap-4">
-            <button
-              type="button"
-              onClick={() => handleTipoChange("usuario")}
-              className={`flex flex-col items-center justify-center flex-1 p-4 border rounded-xl cursor-pointer transition ${
-                formData.tipoUsuario === "usuario" ? "border-pink-500 shadow-md text-pink-600" : "border-gray-300 text-gray-600"
-              }`}
-            >
-              <div className="mb-1 text-2xl">👤</div>
-              <span className="text-sm font-semibold">Usuario</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTipoChange("empresario")}
-              className={`flex flex-col items-center justify-center flex-1 p-4 border rounded-xl cursor-pointer transition ${
-                formData.tipoUsuario === "empresario" ? "border-pink-500 shadow-md text-pink-600" : "border-gray-300 text-gray-600"
-              }`}
-            >
-              <div className="mb-1 text-2xl">🏢</div>
-              <span className="text-sm font-semibold">Empresario</span>
-            </button>
-          </div>
-
-          {errors.general && <div className="bg-red-100 text-red-700 p-2 rounded mb-3 text-sm">{errors.general}</div>}
-          {successMessage && <div className="bg-green-100 text-green-700 p-2 rounded mb-3 text-sm">{successMessage}</div>}
-
-          <form className="flex flex-col gap-3 text-left" onSubmit={handleSubmit}>
-            <input type="text" name="num_doc_usuario" placeholder="Número de documento" value={formData.num_doc_usuario} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.num_doc_usuario && <p className="text-red-500 text-xs">{errors.num_doc_usuario}</p>}
-
-            <input type="text" name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.nombre && <p className="text-red-500 text-xs">{errors.nombre}</p>}
-
-            <input type="text" name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.apellido && <p className="text-red-500 text-xs">{errors.apellido}</p>}
-
-            <input type="email" name="email" placeholder="Correo electrónico" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
-
-            <input type="tel" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} maxLength="15" className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.telefono && <p className="text-red-500 text-xs">{errors.telefono}</p>}
-
-            <input type="password" name="password" placeholder="Contraseña" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-
-            <input type="password" name="confirmPassword" placeholder="Confirmar contraseña" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
-
-            <input type="number" name="edad" placeholder="Edad" value={formData.edad} onChange={handleChange} className="w-full px-4 py-2 border border-pink-400 rounded-full" />
-            {errors.edad && <p className="text-red-500 text-xs">{errors.edad}</p>}
-
-            <select name="genero" value={formData.genero} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-full bg-white text-gray-700">
-              <option value="">Género</option>
-              <option value="mujer">Mujer</option>
-              <option value="hombre">Hombre</option>
-              <option value="otro">Otro</option>
-            </select>
-            {errors.genero && <p className="text-red-500 text-xs">{errors.genero}</p>}
-
-            <div className="flex items-center text-xs gap-2">
-              <input type="checkbox" id="terms" required />
-              <label htmlFor="terms" className="text-gray-600">
-                Acepto los <Link to="/terminos" className="text-pink-600 underline hover:text-pink-800">términos</Link> y la <Link to="/privacidad" className="text-pink-600 underline hover:text-pink-800">política</Link>.
-              </label>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 via-white to-yellow-50">
+      <div className="flex-1 flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-lg">
+          <div className="card p-8">
+            <div className="flex items-center gap-4 mb-6">
+              <img src={logo} alt="Find & Rate" className="w-16 h-16" />
+              <div>
+                <h1 className="text-2xl font-bold">Crear cuenta</h1>
+                <p className="text-sm text-muted">Únete y descubre los mejores servicios cerca de ti</p>
+              </div>
             </div>
 
-            <button type="submit" disabled={loading} className={`w-full py-3 rounded-full font-bold text-white ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-pink-400 via-pink-300 to-yellow-300 hover:scale-105 transition-transform"}`}>
-              {loading ? "Registrando..." : "Registrarme"}
-            </button>
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <fieldset className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Tipo</span>
+                  <div className="flex gap-2">
+                    <button type="button" aria-pressed={formData.tipoUsuario === "usuario"} onClick={() => handleTipoChange("usuario")} className={`flex-1 btn-secondary ${formData.tipoUsuario === "usuario" ? "ring-2 ring-pink-300" : ""}`}>Usuario</button>
+                    <button type="button" aria-pressed={formData.tipoUsuario === "empresario"} onClick={() => handleTipoChange("empresario")} className={`flex-1 btn-secondary ${formData.tipoUsuario === "empresario" ? "ring-2 ring-pink-300" : ""}`}>Empresario</button>
+                  </div>
+                </label>
 
-            <p className="text-center text-sm text-gray-600 mt-3">
-              ¿Ya tienes cuenta? <Link to="/login" className="text-pink-600 underline hover:text-pink-800">Inicia sesión</Link>
-            </p>
-          </form>
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Documento</span>
+                  <input aria-invalid={!!errors.num_doc_usuario} aria-describedby="err-doc" type="text" name="num_doc_usuario" placeholder="Número de documento" value={formData.num_doc_usuario} onChange={handleChange} className="input" />
+                  {errors.num_doc_usuario && <span id="err-doc" className="text-red-500 text-xs mt-1">{errors.num_doc_usuario}</span>}
+                </label>
+              </fieldset>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Nombre</span>
+                  <input aria-invalid={!!errors.nombre} aria-describedby="err-nombre" type="text" name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleChange} className="input" />
+                  {errors.nombre && <span id="err-nombre" className="text-red-500 text-xs mt-1">{errors.nombre}</span>}
+                </label>
+
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Apellido</span>
+                  <input aria-invalid={!!errors.apellido} aria-describedby="err-apellido" type="text" name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleChange} className="input" />
+                  {errors.apellido && <span id="err-apellido" className="text-red-500 text-xs mt-1">{errors.apellido}</span>}
+                </label>
+              </div>
+
+              <label className="flex flex-col">
+                <span className="text-xs text-muted mb-1">Correo electrónico</span>
+                <input aria-invalid={!!errors.email} aria-describedby="err-email" type="email" name="email" placeholder="correo@ejemplo.com" value={formData.email} onChange={handleChange} className="input" />
+                {errors.email && <span id="err-email" className="text-red-500 text-xs mt-1">{errors.email}</span>}
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Teléfono</span>
+                  <input aria-invalid={!!errors.telefono} aria-describedby="err-tel" type="tel" name="telefono" placeholder="+57 300 000 0000" value={formData.telefono} onChange={handleChange} maxLength="15" className="input" />
+                  {errors.telefono && <span id="err-tel" className="text-red-500 text-xs mt-1">{errors.telefono}</span>}
+                </label>
+
+                <label className="flex flex-col">
+                  <span className="text-xs text-muted mb-1">Edad</span>
+                  <input aria-invalid={!!errors.edad} aria-describedby="err-edad" type="number" name="edad" placeholder="Edad" value={formData.edad} onChange={handleChange} min="18" className="input" />
+                  {errors.edad && <span id="err-edad" className="text-red-500 text-xs mt-1">{errors.edad}</span>}
+                </label>
+              </div>
+
+              <label className="flex flex-col">
+                <span className="text-xs text-muted mb-1">Género</span>
+                <select name="genero" value={formData.genero} onChange={handleChange} className="input bg-white">
+                  <option value="">Selecciona</option>
+                  <option value="mujer">Mujer</option>
+                  <option value="hombre">Hombre</option>
+                  <option value="otro">Otro</option>
+                </select>
+                {errors.genero && <span className="text-red-500 text-xs mt-1">{errors.genero}</span>}
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input id="terms" type="checkbox" required className="scale-100" />
+                <span className="text-muted">Acepto los <Link to="/terminos" className="text-primary underline">términos</Link> y la <Link to="/privacidad" className="text-primary underline">política</Link>.</span>
+              </label>
+
+              {errors.general && <div className="text-red-600 text-sm">{errors.general}</div>}
+              {successMessage && <div className="text-green-700 text-sm">{successMessage}</div>}
+
+              <div className="flex flex-col gap-3">
+                <button type="submit" disabled={loading} className={`btn-primary w-full ${loading ? "opacity-60 cursor-not-allowed" : ""}`}>
+                  {loading ? "Registrando..." : "Crear cuenta"}
+                </button>
+                <Link to="/login" className="text-center text-sm text-muted underline">¿Ya tienes cuenta? Inicia sesión</Link>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
-      <footer className="bg-pink-100 text-center py-4 text-sm text-gray-600 mt-8">
+      <footer className="text-center py-4 text-sm text-muted">
         © {new Date().getFullYear()} Find & Rate — Todos los derechos reservados.
       </footer>
     </div>
