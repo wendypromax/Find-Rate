@@ -14,7 +14,7 @@ const MisLugares = () => {
     }
   });
 
-  const navigate = useNavigate(); // ✅ Hook para navegar entre páginas
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLugares = async () => {
@@ -36,23 +36,23 @@ const MisLugares = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-pink-600 text-xl font-semibold">
+      <div className="flex items-center justify-center h-screen text-indigo-600 text-xl font-semibold font-sans">
         Cargando tus lugares...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 p-8">
-      {/* ✅ Botón para volver atrás */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 p-8 font-sans">
+      {/* Botón para volver atrás */}
       <button
-        onClick={() => navigate(-1)} // -1 = retrocede a la página anterior
-        className="flex items-center gap-2 text-pink-600 font-semibold mb-6 hover:text-pink-800 transition"
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-indigo-600 font-semibold mb-6 hover:text-indigo-800 transition-colors duration-200"
       >
         <FaArrowLeft /> Volver atrás
       </button>
 
-      <h1 className="text-3xl font-bold text-center text-pink-600 mb-8">
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8 font-sans">
         Mis Lugares Registrados
       </h1>
 
@@ -65,7 +65,7 @@ const MisLugares = () => {
           {lugares.map((lugar) => (
             <div
               key={lugar.id_lugar}
-              className="bg-white shadow-lg rounded-xl p-4 flex flex-col gap-3 hover:shadow-xl transition"
+              className="bg-white shadow-lg rounded-xl p-4 flex flex-col gap-3 hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-100"
             >
               {lugar.imagen_lugar && (
                 <img
@@ -74,18 +74,18 @@ const MisLugares = () => {
                   className="w-full h-40 object-cover rounded-xl"
                 />
               )}
-              <h2 className="text-lg font-bold text-pink-600">
+              <h2 className="text-lg font-bold text-gray-800">
                 {lugar.nombre_lugar}
               </h2>
               <p className="text-gray-600 flex items-center gap-2 text-sm">
-                <FaMapMarkerAlt className="text-pink-500" />
+                <FaMapMarkerAlt className="text-indigo-500" />
                 {lugar.direccion_lugar || "Dirección no disponible"}
               </p>
               <p className="text-gray-500 text-sm">
                 {lugar.localidad_lugar || "Localidad no especificada"}
               </p>
-              <p className="text-gray-500 text-sm flex items-center gap-1">
-                <FaStar className="text-yellow-400" />{" "}
+              <p className="text-gray-700 text-sm flex items-center gap-1 font-medium">
+                <FaStar className="text-amber-500" />{" "}
                 {lugar.promedio_estrellas || "Sin reseñas"}
               </p>
             </div>

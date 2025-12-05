@@ -10,6 +10,8 @@ const ResetPassword = () => {
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,67 +54,177 @@ const ResetPassword = () => {
         setError(data.message || "Error al restablecer la contraseña.");
       }
     } catch {
-  setError("No se pudo conectar con el servidor.");
-}
- finally {
+      setError("No se pudo conectar con el servidor.");
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-yellow-100 font-[Poppins] px-4">
-      <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl w-full max-w-md text-center border border-purple-200">
-        <img src={logo} alt="Find & Rate" className="mx-auto mb-4 w-32" />
-        <h2 className="text-xl font-bold text-gray-700 mb-2">
-          Restablecer Contraseña
-        </h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Escribe tu nueva contraseña y confírmala para continuar.
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6 font-sans">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10 w-full max-w-md border border-gray-100">
+        {/* Logo y título */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Find & Rate" className="w-40" />
+          </div>
+          <div className="inline-block mb-4">
+            <div className="w-16 h-1 bg-gradient-to-r from-emerald-500 to-green-500 mx-auto mb-4 rounded-full"></div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Restablecer Contraseña
+            </h2>
+            <div className="w-16 h-1 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto mt-4 rounded-full"></div>
+          </div>
+          <p className="text-gray-600 text-sm">
+            Crea una nueva contraseña segura para tu cuenta.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nueva contraseña */}
           <div>
-            <label className="text-sm text-gray-600">Nueva contraseña</label>
-            <input
-              type="password"
-              placeholder="********"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-purple-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-300"
-            />
+            <label className="block text-gray-700 font-medium mb-3 text-sm">
+              Nueva contraseña
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Mínimo 6 caracteres"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                className="w-full px-5 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
 
+          {/* Confirmar contraseña */}
           <div>
-            <label className="text-sm text-gray-600">
+            <label className="block text-gray-700 font-medium mb-3 text-sm">
               Confirmar contraseña
             </label>
-            <input
-              type="password"
-              placeholder="********"
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-purple-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-300"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Repite tu contraseña"
+                value={confirmar}
+                onChange={(e) => {
+                  setConfirmar(e.target.value);
+                  setError("");
+                }}
+                className="w-full px-5 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {exito && <p className="text-green-600 text-sm">{exito}</p>}
+          {/* Indicador de fortaleza */}
+          {password.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Seguridad:</span>
+                <span className={`font-medium ${
+                  password.length >= 8 ? "text-green-600" : 
+                  password.length >= 6 ? "text-amber-600" : "text-red-600"
+                }`}>
+                  {password.length >= 8 ? "Fuerte" : 
+                   password.length >= 6 ? "Media" : "Débil"}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-300 ${
+                    password.length >= 8 ? "bg-green-500 w-full" : 
+                    password.length >= 6 ? "bg-amber-500 w-2/3" : "bg-red-500 w-1/3"
+                  }`}
+                ></div>
+              </div>
+            </div>
+          )}
 
+          {/* Mensajes de estado */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                  <span className="text-red-500">!</span>
+                </div>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {exito && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                  <span className="text-green-500">✓</span>
+                </div>
+                <div>
+                  <p className="text-green-700 font-medium text-sm">{exito}</p>
+                  <p className="text-green-600 text-xs mt-1">
+                    Redirigiendo al inicio de sesión...
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Botón de envío */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-orange-400 to-fuchsia-500 text-white font-semibold py-2 rounded-full shadow-md hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !password || !confirmar}
+            className={`w-full py-3 font-medium rounded-xl transition-all duration-300 ${
+              loading || !password || !confirmar
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:shadow-lg"
+            }`}
           >
-            {loading ? "Guardando..." : "Restablecer Contraseña"}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Guardando...
+              </div>
+            ) : (
+              "Restablecer contraseña"
+            )}
           </button>
         </form>
 
-        <Link
-          to="/login"
-          className="mt-4 inline-block text-sm text-black hover:underline"
-        >
-          ← Volver al inicio de sesión
-        </Link>
+        {/* Enlace de retorno */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <Link
+            to="/login"
+            className="flex items-center justify-center text-gray-600 hover:text-emerald-600 transition-colors duration-200"
+          >
+            <span className="mr-2">←</span>
+            Volver al inicio de sesión
+          </Link>
+        </div>
+
+        {/* Consejos de seguridad */}
+        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+          <p className="text-blue-700 text-xs">
+            <span className="font-medium">🔒 Consejo de seguridad:</span> Usa una 
+            contraseña única que no hayas utilizado en otros servicios.
+          </p>
+        </div>
       </div>
     </div>
   );

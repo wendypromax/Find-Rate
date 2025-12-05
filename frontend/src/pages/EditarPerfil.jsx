@@ -100,134 +100,149 @@ const EditarPerfil = () => {
     }
   };
 
-  if (loading) return <p className="text-center mt-10">Cargando perfil...</p>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+      <p className="text-gray-700">Cargando perfil...</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-200 p-6 flex justify-center">
-      <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-xl">
-        <h1 className="text-3xl font-bold text-pink-600 mb-6 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-6 flex justify-center items-center font-sans">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
           Editar Perfil
         </h1>
 
-        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        {success && <p className="text-green-500 mb-4 text-center">{success}</p>}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-center border border-red-200">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 rounded-lg text-center border border-emerald-200">
+            {success}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-semibold text-gray-700">Número de documento</label>
-            <input
-              type="text"
-              name="num_doc_usuario"
-              value={formData.num_doc_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Número de documento *</label>
+              <input
+                type="text"
+                name="num_doc_usuario"
+                value={formData.num_doc_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Nombre *</label>
+              <input
+                type="text"
+                name="nombre_usuario"
+                value={formData.nombre_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Apellido *</label>
+              <input
+                type="text"
+                name="apellido_usuario"
+                value={formData.apellido_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Correo *</label>
+              <input
+                type="email"
+                name="correo_usuario"
+                value={formData.correo_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Teléfono</label>
+              <input
+                type="text"
+                name="telefono_usuario"
+                value={formData.telefono_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Edad</label>
+              <input
+                type="number"
+                name="edad_usuario"
+                value={formData.edad_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Género</label>
+              <select
+                name="genero_usuario"
+                value={formData.genero_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+              >
+                <option value="">Selecciona tu género</option>
+                <option value="mujer">Mujer</option>
+                <option value="hombre">Hombre</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">Estado</label>
+              <select
+                name="estado_usuario"
+                value={formData.estado_usuario}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+              >
+                <option value="">Selecciona un estado</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block font-semibold text-gray-700">Nombre</label>
-            <input
-              type="text"
-              name="nombre_usuario"
-              value={formData.nombre_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-              required
-            />
-          </div>
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
+              >
+                ← Volver al Dashboard
+              </button>
 
-          <div>
-            <label className="block font-semibold text-gray-700">Apellido</label>
-            <input
-              type="text"
-              name="apellido_usuario"
-              value={formData.apellido_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700">Correo</label>
-            <input
-              type="email"
-              name="correo_usuario"
-              value={formData.correo_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700">Teléfono</label>
-            <input
-              type="text"
-              name="telefono_usuario"
-              value={formData.telefono_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700">Edad</label>
-            <input
-              type="number"
-              name="edad_usuario"
-              value={formData.edad_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700">Género</label>
-            <select
-              name="genero_usuario"
-              value={formData.genero_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-            >
-              <option value="">Selecciona tu género</option>
-              <option value="mujer">Mujer</option>
-              <option value="hombre">Hombre</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700">Estado</label>
-            <select
-              name="estado_usuario"
-              value={formData.estado_usuario}
-              onChange={handleChange}
-              className="w-full border rounded p-2 focus:outline-pink-400"
-            >
-              <option value="">Selecciona un estado</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
-          </div>
-
-          {/* Botones */}
-          <div className="flex justify-between mt-4">
-            <button
-              type="submit"
-              className="bg-pink-500 text-white font-semibold py-2 px-6 rounded hover:bg-pink-600 transition"
-            >
-              Guardar cambios
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard")}
-              className="bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded hover:bg-gray-400 transition"
-            >
-              ← Volver al Dashboard
-            </button>
+              <button
+                type="submit"
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition"
+              >
+                Guardar cambios
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -236,4 +251,3 @@ const EditarPerfil = () => {
 };
 
 export default EditarPerfil;
-
