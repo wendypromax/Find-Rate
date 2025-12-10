@@ -260,8 +260,61 @@ Proyecto educativo - 2025
 
 **¿Quieres contribuir?**  [GUIA_MIGRACION.md](./GUIA_MIGRACION.md)
 
+🛠️ Implementación del PSP
+
+En este proyecto se aplicó el Personal Software Process (PSP) para llevar control del tiempo, los defectos y las métricas del desarrollo.
+
+Registro del Tiempo (Clockify)
+
+Se documentó el tiempo dedicado a cada fase del PSP:
+
+Planificación
+
+Diseño
+
+Codificación
+
+Compilación
+
+Corrección de errores
+
+Pruebas
+
+
+Los tiempos fueron registrados diariamente usando Clockify.
+
+Registro de Defectos (GitHub Issues)
+
+Cada defecto identificado se registró como un Issue en GitHub con:
+
+Descripción del error
+
+Fase donde se introdujo
+
+Fase donde se detectó
+
+Estado del issue (abierto/cerrado)
+
+Tiempo estimado de corrección
+
+
+Esto permitió hacer trazabilidad de los problemas encontrados durante el desarrollo.
+
+Métricas del PSP
+
+A partir de los registros se calcularon:
+
+Tiempo total por fase
+
+Distribución del esfuerzo
+
+Número de defectos por fase
+
+Fases más críticas del proceso
+
+Eficiencia y productividad del desarrollo
 ---
 
-**Última actualización:** 3 de diciembre de 2025  
+**Última actualización:** 10 de diciembre de 2025  
 **Documentación version:** 1.0  
 **Estado:**  Completa y Verificada
