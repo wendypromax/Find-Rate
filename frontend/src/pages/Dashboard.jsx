@@ -1,4 +1,4 @@
-// frontend/src/pages/Dashboard.jsx - VERSIÓN CON DISEÑO MEJORADO
+// frontend/src/pages/Dashboard.jsx - VERSIÓN COMPLETA CON PAGINACIÓN (3, 6, 9 lugares)
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -22,7 +22,11 @@ import {
   FaSearch,
   FaFilter,
   FaHome,
-  FaChartLine
+  FaChartLine,
+  FaChevronLeft,
+  FaChevronRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight
 } from "react-icons/fa";
 import { useFavoritos } from "../context/FavoritosContext";
 
@@ -62,6 +66,10 @@ const Dashboard = () => {
   const [comentarioEditado, setComentarioEditado] = useState("");
   const [calificacionEditada, setCalificacionEditada] = useState(0);
   const [eliminandoResenia, setEliminandoResenia] = useState(null);
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9); // Valor por defecto: 9 lugares por página (3x3 grid)
 
   // Referencias
   const menuRef = useRef(null);
@@ -228,6 +236,7 @@ const Dashboard = () => {
     }
 
     setSearchResult(resultado);
+    setCurrentPage(1); // Resetear a la primera página cuando se filtran resultados
   };
 
   // Buscar automáticamente cuando cambian los filtros
@@ -495,6 +504,86 @@ const Dashboard = () => {
     return resenia.nombre_usuario || user.nombre_usuario || user.nombre || "Usuario";
   };
 
+  // --- FUNCIONALIDAD DE PAGINACIÓN ---
+  
+  // Obtener los lugares actuales (filtrados o todos)
+  const lugaresActuales = searchResult ?? lugares;
+  const totalLugares = lugaresActuales.length;
+  
+  // Calcular índices para la paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLugares = lugaresActuales.slice(indexOfFirstItem, indexOfLastItem);
+  
+  // Calcular total de páginas
+  const totalPages = Math.ceil(totalLugares / itemsPerPage);
+  
+  // Generar array de números de página para mostrar
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      // Mostrar todas las páginas
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Mostrar páginas con elipsis
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = Math.min(totalPages, currentPage + 2);
+      
+      if (currentPage <= 3) {
+        endPage = maxPagesToShow;
+      }
+      
+      if (currentPage >= totalPages - 2) {
+        startPage = totalPages - maxPagesToShow + 1;
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+    }
+    
+    return pageNumbers;
+  };
+  
+  // Cambiar de página
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+      // Scroll suave hacia arriba
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  // Cambiar cantidad de items por página - SOLO 3, 6, 9
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Volver a la primera página
+  };
+  
+  // Ir a primera página
+  const goToFirstPage = () => {
+    paginate(1);
+  };
+  
+  // Ir a última página
+  const goToLastPage = () => {
+    paginate(totalPages);
+  };
+  
+  // Ir a página anterior
+  const goToPreviousPage = () => {
+    paginate(currentPage - 1);
+  };
+  
+  // Ir a página siguiente
+  const goToNextPage = () => {
+    paginate(currentPage + 1);
+  };
+
   // Mostrar loading mientras se carga el usuario
   if (loadingUser) {
     return (
@@ -526,7 +615,7 @@ const Dashboard = () => {
     );
   }
 
-  // Si está en vista detalle, mostrar esa pantalla
+  // Si está en vista detalle, mostrar esa pantalla (COMPLETAMENTE IGUAL)
   if (vistaDetalle && lugarSeleccionado) {
     const promedio = calcularPromedio();
 
@@ -901,10 +990,10 @@ const Dashboard = () => {
     );
   }
 
-  // Vista principal del dashboard
+  // Vista principal del dashboard (CON LA PAGINACIÓN AGREGADA)
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex flex-col relative overflow-y-auto font-sans">
-      {/* Encabezado */}
+      {/* Encabezado - COMPLETAMENTE IGUAL */}
       <header className="flex justify-between items-center p-5 bg-white/95 backdrop-blur-sm shadow-md sticky top-0 z-20 border-b border-gray-200">
         <button
           onClick={() => setMenuOpen((s) => !s)}
@@ -982,7 +1071,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Menú lateral */}
+      {/* Menú lateral - COMPLETAMENTE IGUAL */}
       <aside
         ref={menuRef}
         className={`fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-30 p-6 transform transition-transform duration-300 ease-in-out ${
@@ -1087,9 +1176,9 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Contenido principal */}
+      {/* Contenido principal - CON PAGINACIÓN AGREGADA */}
       <main className="flex-1 flex flex-col items-center justify-start mt-6 md:mt-8 space-y-6 md:space-y-8 px-4 md:px-6 pb-10">
-        {/* Buscador y filtros */}
+        {/* Buscador y filtros - COMPLETAMENTE IGUAL */}
         <div className="w-full max-w-6xl">
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
             <div className="flex flex-col lg:flex-row items-center gap-4">
@@ -1131,11 +1220,35 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Contador y mensajes */}
+        {/* Contador y selector de lugares por página - MODIFICADO */}
         <div className="w-full max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-lg font-semibold text-gray-900">
-              📍 <span className="text-indigo-600">{(searchResult ?? lugares).length}</span> lugares encontrados
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              {/* Contador de lugares */}
+              <div className="text-lg font-semibold text-gray-900">
+                📍 <span className="text-indigo-600">{totalLugares}</span> lugares encontrados
+              </div>
+              
+              {/* SELECTOR DE LUGARES POR PÁGINA (3, 6, 9) */}
+              <div className="flex items-center gap-3">
+                <span className="text-gray-700 text-sm font-medium">Mostrar:</span>
+                <div className="flex bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm">
+                  {[3, 6, 9].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => handleItemsPerPageChange(num)}
+                      className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                        itemsPerPage === num
+                          ? "bg-indigo-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      } ${num === 3 ? '' : 'border-l border-gray-300'}`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-gray-600 text-sm">por página</span>
+              </div>
             </div>
             
             {mensaje && (
@@ -1150,11 +1263,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Grid de lugares */}
+        {/* Grid de lugares - SOLO MUESTRA LOS LUGARES DE LA PÁGINA ACTUAL */}
         <div className="w-full max-w-6xl">
-          {(searchResult ?? lugares).length > 0 ? (
+          {currentLugares.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {(searchResult ?? lugares).map((lugar) => (
+              {currentLugares.map((lugar) => (
                 <div
                   key={lugar.id_lugar}
                   onClick={() => verDetalle(lugar)}
@@ -1244,6 +1357,122 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+
+        {/* PAGINACIÓN COMPLETA */}
+        {totalLugares > itemsPerPage && (
+          <div className="w-full max-w-6xl mt-8">
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                {/* Información de página */}
+                <div className="text-gray-700">
+                  Mostrando <span className="font-bold">{indexOfFirstItem + 1}</span> a{" "}
+                  <span className="font-bold">
+                    {Math.min(indexOfLastItem, totalLugares)}
+                  </span>{" "}
+                  de <span className="font-bold">{totalLugares}</span> lugares
+                </div>
+                
+                {/* Controles de paginación */}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {/* Botón primera página */}
+                  <button
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-lg border ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                    }`}
+                    title="Primera página"
+                  >
+                    <FaAngleDoubleLeft size={16} />
+                  </button>
+                  
+                  {/* Botón página anterior */}
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-lg border ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                    }`}
+                    title="Página anterior"
+                  >
+                    <FaChevronLeft size={16} />
+                  </button>
+                  
+                  {/* Números de página */}
+                  {getPageNumbers().map((number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`px-4 py-2 rounded-lg font-medium ${
+                        currentPage === number
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                      } border`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                  
+                  {/* Botón página siguiente */}
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-lg border ${
+                      currentPage === totalPages
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                    }`}
+                    title="Página siguiente"
+                  >
+                    <FaChevronRight size={16} />
+                  </button>
+                  
+                  {/* Botón última página */}
+                  <button
+                    onClick={goToLastPage}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-lg border ${
+                      currentPage === totalPages
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                    }`}
+                    title="Última página"
+                  >
+                    <FaAngleDoubleRight size={16} />
+                  </button>
+                </div>
+                
+                {/* Información de páginas */}
+                <div className="text-gray-700 hidden md:block">
+                  Página <span className="font-bold">{currentPage}</span> de{" "}
+                  <span className="font-bold">{totalPages}</span>
+                </div>
+              </div>
+              
+              {/* Selector de página rápida */}
+              <div className="mt-4 pt-4 border-t border-gray-200 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 text-sm">Ir a página:</span>
+                  <select
+                    value={currentPage}
+                    onChange={(e) => paginate(parseInt(e.target.value))}
+                    className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <option key={page} value={page}>
+                        {page}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
