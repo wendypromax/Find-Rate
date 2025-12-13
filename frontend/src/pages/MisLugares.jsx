@@ -49,6 +49,8 @@ const MisLugares = () => {
           return;
         }
         
+        console.log("🔍 Obteniendo lugares para usuario:", user.id_usuario);
+        
         const res = await axios.get(
           `http://localhost:5003/api/lugares/empresario/${user.id_usuario}`,
           {
@@ -58,13 +60,16 @@ const MisLugares = () => {
           }
         );
         
+        console.log("📦 Respuesta de lugares:", res.data);
+        
         if (res.data && res.data.lugares) {
           setLugares(res.data.lugares);
         } else {
           setLugares([]);
         }
       } catch (error) {
-        console.error("Error al cargar los lugares del empresario:", error);
+        console.error("❌ Error al cargar los lugares del empresario:", error);
+        console.error("📊 Detalles:", error.response?.data);
         setError("Error al cargar los lugares. Verifica tu conexión.");
       } finally {
         setLoading(false);
@@ -75,12 +80,14 @@ const MisLugares = () => {
   }, [user]);
 
   const handleVerDetalles = (lugar) => {
+    console.log("👁️ Ver detalles de lugar:", lugar.id_lugar);
     setLugarSeleccionado(lugar);
     setMostrarModal(true);
     document.body.style.overflow = 'hidden';
   };
 
   const handleCerrarModal = () => {
+    console.log("❌ Cerrando modal");
     setMostrarModal(false);
     setLugarSeleccionado(null);
     setEditando(false);
@@ -99,6 +106,7 @@ const MisLugares = () => {
   };
 
   const handleIniciarEdicion = (lugar) => {
+    console.log("✏️ Iniciando edición de lugar:", lugar.id_lugar);
     setLugarSeleccionado(lugar);
     setEditando(true);
     setFormData({
@@ -127,6 +135,7 @@ const MisLugares = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log("📸 Nueva imagen seleccionada:", file.name, file.size, file.type);
       setNuevaImagen(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -150,58 +159,91 @@ const MisLugares = () => {
     setError("");
     
     try {
-      let dataToSend = { ...formData };
+      console.log("🔄 Iniciando actualización del lugar...");
+      console.log("📍 Lugar ID:", lugarSeleccionado.id_lugar);
+      console.log("📝 Datos del formulario:", formData);
+      console.log("🖼️ Nueva imagen:", nuevaImagen ? `${nuevaImagen.name} (${nuevaImagen.size} bytes)` : "No hay nueva imagen");
+      console.log("🔑 Token:", localStorage.getItem('token') ? "Token presente" : "NO HAY TOKEN");
       
-      // Si hay una nueva imagen, subirla primero
+      // Crear FormData para enviar la imagen
+      const formDataToSend = new FormData();
+      formDataToSend.append('nit_lugar', formData.nit_lugar);
+      formDataToSend.append('nombre_lugar', formData.nombre_lugar);
+      formDataToSend.append('localidad_lugar', formData.localidad_lugar);
+      formDataToSend.append('direccion_lugar', formData.direccion_lugar);
+      formDataToSend.append('red_social_lugar', formData.red_social_lugar || '');
+      formDataToSend.append('tipo_entrada_lugar', formData.tipo_entrada_lugar || '');
+      
+      // Agregar la nueva imagen si existe
       if (nuevaImagen) {
-        const formDataImg = new FormData();
-        formDataImg.append('imagen', nuevaImagen);
-        
-        const uploadRes = await axios.post(
-          'http://localhost:5003/api/upload',
-          formDataImg,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          }
-        );
-        
-        if (uploadRes.data && uploadRes.data.path) {
-          dataToSend.imagen_lugar = uploadRes.data.path;
-        }
+        formDataToSend.append('imagen_lugar', nuevaImagen);
       }
 
+      // Mostrar lo que se va a enviar
+      console.log("📤 Enviando FormData:");
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      // URL del endpoint
+      const url = `http://localhost:5003/api/lugares/${lugarSeleccionado.id_lugar}`;
+      console.log("🌐 URL:", url);
+      
       // Actualizar el lugar
-      await axios.put(
-        `http://localhost:5003/api/lugares/${lugarSeleccionado.id_lugar}`,
-        dataToSend,
+      console.log("⏳ Enviando petición PUT...");
+      const response = await axios.put(
+        url,
+        formDataToSend,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
           }
         }
       );
 
+      console.log("✅ Respuesta del servidor:", response.data);
+
       // Actualizar la lista de lugares localmente
+      const updatedLugar = {
+        ...lugarSeleccionado,
+        ...formData,
+        imagen_lugar: response.data.imagen_url || lugarSeleccionado.imagen_lugar
+      };
+
       setLugares(prev => prev.map(lugar => 
         lugar.id_lugar === lugarSeleccionado.id_lugar 
-          ? { ...lugar, ...dataToSend }
+          ? updatedLugar
           : lugar
       ));
 
       // Actualizar el lugar seleccionado
-      setLugarSeleccionado(prev => ({ ...prev, ...dataToSend }));
+      setLugarSeleccionado(updatedLugar);
       
       setEditando(false);
       setNuevaImagen(null);
+      console.log("🎉 ¡Lugar actualizado exitosamente!");
       alert("¡Lugar actualizado exitosamente!");
     } catch (error) {
-      console.error("Error al actualizar el lugar:", error);
-      const errorMsg = error.response?.data?.message || "Error al actualizar el lugar";
+      console.error("❌ Error al actualizar el lugar:", error);
+      console.error("📊 Detalles del error:");
+      console.error("Status:", error.response?.status);
+      console.error("Status Text:", error.response?.statusText);
+      console.error("Datos:", error.response?.data);
+      console.error("Headers:", error.response?.headers);
+      console.error("Mensaje:", error.message);
+      
+      let errorMsg = "Error al actualizar el lugar";
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
       setError(errorMsg);
-      alert(errorMsg);
+      alert(`Error: ${errorMsg}`);
     } finally {
       setGuardando(false);
     }
@@ -210,16 +252,25 @@ const MisLugares = () => {
   const handleEliminarLugar = async () => {
     if (!lugarSeleccionado) return;
     
+    console.log("🗑️ Intentando eliminar lugar ID:", lugarSeleccionado.id_lugar);
+    console.log("🔑 Token:", localStorage.getItem('token') ? "Token presente" : "NO HAY TOKEN");
+    
     setEliminandoId(lugarSeleccionado.id_lugar);
     try {
-      await axios.delete(
-        `http://localhost:5003/api/lugares/${lugarSeleccionado.id_lugar}`,
+      const url = `http://localhost:5003/api/lugares/${lugarSeleccionado.id_lugar}`;
+      console.log("🌐 URL DELETE:", url);
+      
+      console.log("⏳ Enviando petición DELETE...");
+      const response = await axios.delete(
+        url,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
+
+      console.log("✅ Respuesta DELETE:", response.data);
 
       // Eliminar de la lista local
       setLugares(prev => prev.filter(lugar => 
@@ -228,17 +279,32 @@ const MisLugares = () => {
 
       setMostrarConfirmarEliminar(false);
       handleCerrarModal();
+      console.log("🗑️ ¡Lugar eliminado exitosamente!");
       alert("¡Lugar eliminado exitosamente!");
     } catch (error) {
-      console.error("Error al eliminar el lugar:", error);
-      const errorMsg = error.response?.data?.message || "Error al eliminar el lugar";
-      alert(errorMsg);
+      console.error("❌ Error al eliminar el lugar:", error);
+      console.error("📊 Detalles del error DELETE:");
+      console.error("Status:", error.response?.status);
+      console.error("Datos:", error.response?.data);
+      console.error("Mensaje:", error.message);
+      
+      let errorMsg = "Error al eliminar el lugar";
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      alert(`Error: ${errorMsg}`);
     } finally {
       setEliminandoId(null);
     }
   };
 
   const handleCancelarEdicion = () => {
+    console.log("🚫 Cancelando edición");
     setEditando(false);
     setFormData({
       nit_lugar: lugarSeleccionado?.nit_lugar || "",
@@ -728,28 +794,6 @@ const MisLugares = () => {
                             </div>
                           </div>
                         </div>
-
-                        {/* Información de contacto si existe */}
-                        {lugarSeleccionado.telefono_lugar && (
-                          <div className="pt-4 border-t border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Contacto</h3>
-                            <div className="flex items-center gap-2">
-                              <FaPhone className="text-green-600" />
-                              <span className="text-gray-700">{lugarSeleccionado.telefono_lugar}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Horario si existe */}
-                        {lugarSeleccionado.horario_lugar && (
-                          <div className="pt-4 border-t border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Horario</h3>
-                            <div className="flex items-center gap-2">
-                              <FaClock className="text-orange-600" />
-                              <span className="text-gray-700">{lugarSeleccionado.horario_lugar}</span>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
 
