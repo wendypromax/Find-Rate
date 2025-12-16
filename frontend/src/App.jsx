@@ -25,6 +25,10 @@ import MisResenias from "./pages/MisResenias";
 import { Toaster } from "react-hot-toast";
 import GestionUsuarios from "./pages/admin/GestionUsuarios";
 import ReporteResenas from "./pages/admin/ReporteResenas";
+import ReporteGeneralResenas from "./pages/admin/ReporteGeneralResenas";
+import Estadisticas from "./pages/admin/Estadisticas";
+
+
 function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -102,6 +106,8 @@ function App() {
         <Route path="/reseñas" element={<MisResenias />} />
         <Route path="/admin/usuarios" element={<GestionUsuarios />} />
         <Route path="/admin/reportes-resenas" element={<ReporteResenas />} />
+        <Route path="/admin/ReporteGeneralResenas" element={<ReporteGeneralResenas />} />
+        <Route path="/admin/estadisticas" element={<Estadisticas />} />
 
         {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
         <Route path="/lugar/:id" element={<DetalleLugar />} />
