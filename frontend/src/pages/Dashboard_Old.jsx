@@ -11,6 +11,7 @@ import SearchBar from "../components/SearchBar";
 import LugarGridCard from "../components/LugarGridCard";
 import ReviewForm from "../components/ReviewForm";
 import ReviewItem from "../components/ReviewItem";
+import GestionUsuarios from "./admin/GestionUsuarios";
 
 const Dashboard = () => {
   const navigate = useNavigate();

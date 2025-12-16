@@ -25,6 +25,7 @@ import tipoServicioRoutes from "./routes/tipoServicioRoutes.js";
 import recuperarCuentaRoutes from "./routes/recuperarCuenta.js";
 import resetPasswordRoutes from "./routes/resetPassword.js";
 import lugarRoutes from "./routes/lugarRoutes.js";
+import adminUsuarioRoutes from "./routes/adminUsuarioRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,6 +60,7 @@ app.use("/api/tipoServicio", tipoServicioRoutes);
 app.use("/api/recuperar-cuenta", recuperarCuentaRoutes);
 app.use("/api/reset-password", resetPasswordRoutes);
 app.use("/api/lugares", lugarRoutes);
+app.use("/api/admin/usuarios", adminUsuarioRoutes);
 
 // ===== Ruta raíz =====
 app.get("/", (req, res) => {
