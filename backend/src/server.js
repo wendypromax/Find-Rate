@@ -27,6 +27,7 @@ import resetPasswordRoutes from "./routes/resetPassword.js";
 import lugarRoutes from "./routes/lugarRoutes.js";
 import adminUsuarioRoutes from "./routes/adminUsuarioRoutes.js";
 import reporteRoutes from "./routes/reporteRoutes.js";
+import cargaMasivaRoutes from "./routes/cargaMasivaRoutes.js"; // ← NUEVA
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,6 +64,7 @@ app.use("/api/reset-password", resetPasswordRoutes);
 app.use("/api/lugares", lugarRoutes);
 app.use("/api/admin/usuarios", adminUsuarioRoutes);
 app.use("/api/reportes", reporteRoutes);
+app.use("/api/carga-masiva", cargaMasivaRoutes);
 
 // ===== Ruta raíz =====
 app.get("/", (req, res) => {

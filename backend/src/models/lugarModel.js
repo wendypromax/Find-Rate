@@ -1,4 +1,4 @@
-import { db } from "../Server.js";
+import { pool } from "../config/db.js";
 
 export const LugarModel = {
   // 🔹 Insertar un nuevo lugar
