@@ -29,7 +29,6 @@ export const obtenerResenasPorLugar = async (idLugar) => {
     throw error;
   }
 };
-import db from "../config/db.js";
 
 export const obtenerReporteGeneralResenas = async (
   fechaInicio,
@@ -70,6 +69,6 @@ export const obtenerReporteGeneralResenas = async (
     params.push(estado);
   }
 
-  const [rows] = await db.query(sql, params);
+  const [rows] = await pool.query(sql, params);
   return rows[0];
 };
