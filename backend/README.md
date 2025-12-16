@@ -1,20 +1,20 @@
-# 🔧 Backend - Find & Rate API
+Backend - Find & Rate API
 
 API REST de Node.js + Express para la plataforma Find & Rate.
 
-## 📋 Requisitos
+Requisitos
 
 - Node.js v16+
 - MySQL 8.0+
 - npm
 
-## 🚀 Instalación
+Instalación
 
 ```bash
 npm install
 ```
 
-## 📝 Configuración
+Configuración
 
 Crear archivo `.env` en la raíz del backend:
 
@@ -29,11 +29,11 @@ EMAIL_PASS=tu_contraseña_app
 PORT=5000
 ```
 
-### ⚠️ Nota sobre contraseña de Gmail:
+#Nota sobre contraseña de Gmail:
 - NO usar tu contraseña normal
 - Usar [Contraseña de aplicación](https://myaccount.google.com/apppasswords) desde Google Account
 
-## 🎯 Scripts
+Scripts
 
 ```bash
 # Desarrollo (con auto-reload)
@@ -63,7 +63,7 @@ backend/
 └── package.json
 ```
 
-## 🔌 Endpoints Principales
+Endpoints Principales
 
 ### Autenticación
 - `POST /api/auth/register` - Registrar usuario
