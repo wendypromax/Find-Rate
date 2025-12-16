@@ -1147,6 +1147,13 @@ const Dashboard = () => {
                     <FaUsersCog className="text-lg" /> Gestionar Usuarios
                   </button>
                   <button
+  onClick={() => navigate("/admin/reportes-resenas")}
+  className="px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-xl"
+>
+  📊 Reporte de Reseñas
+</button>
+
+                  <button
                     onClick={() => {
                       setMenuOpen(false);
                       navigate("/admin/estadisticas");
