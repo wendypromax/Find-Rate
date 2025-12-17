@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import logo from "../assets/find-rate-logo.png";
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+
   const [password, setPassword] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [error, setError] = useState("");
@@ -13,10 +14,23 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // 🔐 Validar existencia del token
+  useEffect(() => {
+    if (!token) {
+      setError("El enlace de recuperación no es válido o ha expirado.");
+    }
+  }, [token]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación de contraseñas
+    // Validar token
+    if (!token) {
+      setError("Token de recuperación inválido.");
+      return;
+    }
+
+    // Validaciones
     if (!password || !confirmar) {
       setError("Por favor completa ambos campos.");
       return;
@@ -63,18 +77,16 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10 w-full max-w-md border border-gray-100">
+
         {/* Logo y título */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Find & Rate" className="w-40" />
           </div>
-          <div className="inline-block mb-4">
-            <div className="w-16 h-1 bg-gradient-to-r from-emerald-500 to-green-500 mx-auto mb-4 rounded-full"></div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Restablecer Contraseña
-            </h2>
-            <div className="w-16 h-1 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto mt-4 rounded-full"></div>
-          </div>
+
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Restablecer Contraseña
+          </h2>
           <p className="text-gray-600 text-sm">
             Crea una nueva contraseña segura para tu cuenta.
           </p>
@@ -82,26 +94,27 @@ const ResetPassword = () => {
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
+
           {/* Nueva contraseña */}
           <div>
-            <label className="block text-gray-700 font-medium mb-3 text-sm">
+            <label className="block text-gray-700 font-medium mb-2 text-sm">
               Nueva contraseña
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setError("");
                 }}
-                className="w-full px-5 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-5 py-3 pr-12 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                placeholder="Mínimo 6 caracteres"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2"
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
@@ -110,121 +123,64 @@ const ResetPassword = () => {
 
           {/* Confirmar contraseña */}
           <div>
-            <label className="block text-gray-700 font-medium mb-3 text-sm">
+            <label className="block text-gray-700 font-medium mb-2 text-sm">
               Confirmar contraseña
             </label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Repite tu contraseña"
                 value={confirmar}
                 onChange={(e) => {
                   setConfirmar(e.target.value);
                   setError("");
                 }}
-                className="w-full px-5 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-5 py-3 pr-12 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                placeholder="Repite tu contraseña"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2"
               >
                 {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
           </div>
 
-          {/* Indicador de fortaleza */}
-          {password.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Seguridad:</span>
-                <span className={`font-medium ${
-                  password.length >= 8 ? "text-green-600" : 
-                  password.length >= 6 ? "text-amber-600" : "text-red-600"
-                }`}>
-                  {password.length >= 8 ? "Fuerte" : 
-                   password.length >= 6 ? "Media" : "Débil"}
-                </span>
-              </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-300 ${
-                    password.length >= 8 ? "bg-green-500 w-full" : 
-                    password.length >= 6 ? "bg-amber-500 w-2/3" : "bg-red-500 w-1/3"
-                  }`}
-                ></div>
-              </div>
-            </div>
-          )}
-
-          {/* Mensajes de estado */}
+          {/* Mensajes */}
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
-                  <span className="text-red-500">!</span>
-                </div>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              {error}
             </div>
           )}
 
           {exito && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                  <span className="text-green-500">✓</span>
-                </div>
-                <div>
-                  <p className="text-green-700 font-medium text-sm">{exito}</p>
-                  <p className="text-green-600 text-xs mt-1">
-                    Redirigiendo al inicio de sesión...
-                  </p>
-                </div>
-              </div>
+            <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">
+              {exito}
             </div>
           )}
 
-          {/* Botón de envío */}
+          {/* Botón */}
           <button
             type="submit"
-            disabled={loading || !password || !confirmar}
-            className={`w-full py-3 font-medium rounded-xl transition-all duration-300 ${
-              loading || !password || !confirmar
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:shadow-lg"
+            disabled={loading || !password || !confirmar || !token}
+            className={`w-full py-3 rounded-xl font-medium transition ${
+              loading || !password || !confirmar || !token
+                ? "bg-gray-200 text-gray-500"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white"
             }`}
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Guardando...
-              </div>
-            ) : (
-              "Restablecer contraseña"
-            )}
+            {loading ? "Guardando..." : "Restablecer contraseña"}
           </button>
         </form>
 
-        {/* Enlace de retorno */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <Link
-            to="/login"
-            className="flex items-center justify-center text-gray-600 hover:text-emerald-600 transition-colors duration-200"
-          >
-            <span className="mr-2">←</span>
-            Volver al inicio de sesión
+        {/* Volver */}
+        <div className="mt-6 text-center">
+          <Link to="/login" className="text-gray-600 hover:text-emerald-600">
+            ← Volver al inicio de sesión
           </Link>
         </div>
 
-        {/* Consejos de seguridad */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <p className="text-blue-700 text-xs">
-            <span className="font-medium">🔒 Consejo de seguridad:</span> Usa una 
-            contraseña única que no hayas utilizado en otros servicios.
-          </p>
-        </div>
       </div>
     </div>
   );
