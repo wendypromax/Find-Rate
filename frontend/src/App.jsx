@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { 
@@ -14,7 +13,8 @@ import {
   FaTimes,
   FaSearch,
   FaMapMarkerAlt,
-  FaPlus
+  FaPlus,
+  FaCloudUploadAlt
 } from "react-icons/fa";
 import Home from "./pages/Home";
 import Conocenos from "./pages/Conocenos";
@@ -42,6 +42,7 @@ import GestionUsuarios from "./pages/admin/GestionUsuarios";
 import ReporteResenas from "./pages/admin/ReporteResenas";
 import ReporteGeneralResenas from "./pages/admin/ReporteGeneralResenas";
 import Estadisticas from "./pages/admin/Estadisticas";
+import CargaMasiva from "./pages/admin/CargaMasiva";
 
 function App() {
   const navigate = useNavigate();
@@ -282,6 +283,17 @@ function App() {
                           <FaPlus className="text-emerald-500" />
                           <span>Agregar Nuevo Lugar</span>
                         </button>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate("/admin/carga-masiva");
+                          }}
+                          className="flex items-center gap-3 w-full text-left p-2 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition"
+                        >
+                          <FaCloudUploadAlt className="text-cyan-500" />
+                          <span>Carga Masiva de Lugares</span>
+                        </button>
                       </>
                     )}
 
@@ -443,6 +455,16 @@ function App() {
                     >
                       <FaPlus className="text-lg" /> Agregar Lugar
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate("/admin/carga-masiva");
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl hover:from-cyan-600 hover:to-blue-600 transition transform hover:-translate-y-0.5 shadow-md font-sans text-left"
+                    >
+                      <FaCloudUploadAlt className="text-lg" /> Carga Masiva
+                    </button>
                   </>
                 )}
 
@@ -557,6 +579,7 @@ function App() {
           <Route path="/admin/reportes-resenas" element={<ReporteResenas />} />
           <Route path="/admin/ReporteGeneralResenas" element={<ReporteGeneralResenas />} />
           <Route path="/admin/estadisticas" element={<Estadisticas />} />
+          <Route path="/admin/carga-masiva" element={<CargaMasiva />} />
 
           {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
           <Route path="/lugar/:id" element={<DetalleLugar />} />

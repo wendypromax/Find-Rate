@@ -1,0 +1,6 @@
+nit,nombre,localidad,direccion,red_social,tipo_entrada,id_tipo_negociofk,id_tipo_serviciofk
+1001,Restaurante Mexicano,Bogotá,Carrera 10 #20-30,instagram.com/mexicano,gratis,1,2
+1002,Café Central,Medellín,Calle 50 #80-10,facebook.com/cafecentral,gratis,2,3
+1003,Hotel Plaza,Cali,Avenida 6N #23-45,twitter.com/hotelplaza,pago,3,1
+1004,Pizzería Italiana,Barranquilla,Calle 84 #45-20,instagram.com/pizzaitaliana,gratis,1,2
+1005,Gimnasio Fit,Bucaramanga,Diagonal 30 #12-34,facebook.com/gimnasiófit,pago,4,4

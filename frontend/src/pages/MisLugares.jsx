@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { 
-  FaMapMarkerAlt, FaStar, FaArrowLeft, FaEdit, FaTrash, 
-  FaTimes, FaCheck, FaPhone, FaClock, FaTag, FaStore,
-  FaGlobe, FaUser, FaUtensils, FaCar, FaEnvelope, FaHashtag,
+  FaMapMarkerAlt, FaArrowLeft, FaEdit, FaTrash, 
+  FaTimes, FaCheck, FaStore,
+  FaGlobe, FaEnvelope, FaHashtag,
   FaImage, FaUpload
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -181,7 +181,7 @@ const MisLugares = () => {
 
       // Mostrar lo que se va a enviar
       console.log("📤 Enviando FormData:");
-      for (let [key, value] of formDataToSend.entries()) {
+      for (const [key, value] of formDataToSend.entries()) {
         console.log(`${key}:`, value);
       }
 
@@ -385,11 +385,11 @@ const MisLugares = () => {
           </div>
         ) : (
           <>
-            {/* Grid de lugares */}
+            {/* Grid de lugares - KEY ÚNICA USANDO id_lugar */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lugares.map((lugar) => (
                 <div
-                  key={lugar.id_lugar}
+                  key={`lugar-${lugar.id_lugar}`}
                   className="group bg-white rounded-2xl shadow-lg border border-gray-100 hover:border-indigo-300 
                            transition-all duration-300 overflow-hidden hover:shadow-xl hover:-translate-y-1"
                 >
