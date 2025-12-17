@@ -9,21 +9,19 @@ router.post('/', async (req, res) => {
   console.log("📨 POST /api/resenias - Datos recibidos:", req.body);
 
   try {
-    // ACEPTAR AMBAS FORMAS: compatibilidad con el frontend
+    // Aceptar formato del Dashboard.jsx (que usa comentario_resenia)
     const { 
-      // Formato nuevo (Dashboard.jsx)
       id_lugarfk, 
       id_usuariofk, 
-      comentario, 
-      calificacion,
-      // Formato antiguo (por si acaso)
-      comentario_resenia, 
-      calificacion_resenia 
+      comentario_resenia,  // Dashboard.jsx envía esto
+      calificacion_resenia, // Dashboard.jsx envía esto
+      comentario,  // Formato alternativo
+      calificacion // Formato alternativo
     } = req.body;
 
-    // Usar los nombres correctos (con compatibilidad)
-    const comentarioFinal = comentario || comentario_resenia;
-    const calificacionFinal = calificacion || calificacion_resenia;
+    // Usar los nombres correctos (Dashboard.jsx usa comentario_resenia)
+    const comentarioFinal = comentario_resenia || comentario;
+    const calificacionFinal = calificacion_resenia || calificacion;
 
     console.log("🔍 Datos procesados:", {
       comentarioFinal,
@@ -32,9 +30,8 @@ router.post('/', async (req, res) => {
       id_lugarfk
     });
 
-    // Validaciones básicas
+    // Validaciones
     if (!comentarioFinal?.trim()) {
-      console.log("❌ Error: Comentario vacío");
       return res.status(400).json({ 
         success: false, 
         message: "El comentario es obligatorio" 
@@ -42,7 +39,6 @@ router.post('/', async (req, res) => {
     }
 
     if (!calificacionFinal) {
-      console.log("❌ Error: Calificación vacía");
       return res.status(400).json({ 
         success: false, 
         message: "La calificación es obligatoria" 
@@ -50,7 +46,6 @@ router.post('/', async (req, res) => {
     }
 
     if (!id_usuariofk) {
-      console.log("❌ Error: ID usuario vacío");
       return res.status(400).json({ 
         success: false, 
         message: "El ID de usuario es obligatorio" 
@@ -58,58 +53,26 @@ router.post('/', async (req, res) => {
     }
 
     if (!id_lugarfk) {
-      console.log("❌ Error: ID lugar vacío");
       return res.status(400).json({ 
         success: false, 
         message: "El ID de lugar es obligatorio" 
       });
     }
 
-    // Parsear IDs
     const usuarioId = parseInt(id_usuariofk);
     const lugarId = parseInt(id_lugarfk);
-    
-    if (isNaN(usuarioId) || isNaN(lugarId)) {
-      console.log("❌ Error: IDs no numéricos");
-      return res.status(400).json({ 
-        success: false, 
-        message: "Los IDs deben ser numéricos" 
-      });
-    }
 
-    console.log("🔍 IDs parseados:", { usuarioId, lugarId });
-
-    // Verificar si el usuario ya tiene una reseña para este lugar
-    try {
-      const [existingReview] = await db.execute(
-        "SELECT id_resenia FROM resenia WHERE id_usuariofk = ? AND id_lugarfk = ?",
-        [usuarioId, lugarId]
-      );
-
-      if (existingReview.length > 0) {
-        console.log("⚠️ Usuario ya tiene reseña para este lugar");
-        return res.status(400).json({ 
-          success: false, 
-          message: "Ya has publicado una reseña para este lugar" 
-        });
-      }
-    } catch (error) {
-      console.log("⚠️ No se pudo verificar reseña existente:", error.message);
-      // Continuar si hay error en la verificación
-    }
-
-    // 1. Insertar la reseña en la base de datos - VERSIÓN MÁS SIMPLE
+    // Insertar reseña
     console.log("🚀 Insertando reseña en la base de datos...");
     
     let result;
     try {
-      // Intentar con fecha_resenia como DATETIME
       [result] = await db.execute(
         `INSERT INTO resenia 
          (comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk, fecha_resenia, hora_resenia) 
          VALUES (?, ?, ?, ?, NOW(), CURTIME())`,
         [
-          comentarioFinal.trim().substring(0, 50), // Limitar a 50 caracteres según tu estructura
+          comentarioFinal.trim().substring(0, 50),
           calificacionFinal.toString(),
           usuarioId,
           lugarId
@@ -117,25 +80,7 @@ router.post('/', async (req, res) => {
       );
     } catch (insertError) {
       console.error("💥 Error en INSERT:", insertError);
-      
-      // Intentar versión alternativa sin hora_resenia
-      try {
-        console.log("🔄 Intentando INSERT sin hora_resenia...");
-        [result] = await db.execute(
-          `INSERT INTO resenia 
-           (comentario_resenia, calificacion_resenia, id_usuariofk, id_lugarfk, fecha_resenia) 
-           VALUES (?, ?, ?, ?, NOW())`,
-          [
-            comentarioFinal.trim().substring(0, 50),
-            calificacionFinal.toString(),
-            usuarioId,
-            lugarId
-          ]
-        );
-      } catch (secondError) {
-        console.error("💥 Error en segundo INSERT:", secondError);
-        throw secondError;
-      }
+      throw insertError;
     }
 
     console.log("📊 Resultado del INSERT:", result);
@@ -148,7 +93,7 @@ router.post('/', async (req, res) => {
     const reseniaId = result.insertId;
     console.log(`✅ Reseña ${reseniaId} creada exitosamente`);
 
-    // 2. Obtener información del usuario y lugar para el email
+    // Obtener información del usuario y lugar para el email
     console.log("📧 Obteniendo datos para notificación...");
     
     let usuario = { nombre_usuario: "Usuario", correo_usuario: "no@especificado.com" };
@@ -186,7 +131,7 @@ router.post('/', async (req, res) => {
 
     const fecha = new Date().toLocaleString('es-ES');
 
-    // 3. Enviar notificación al administrador (EN SEGUNDO PLANO)
+    // Enviar notificación al administrador (EN SEGUNDO PLANO)
     console.log("📤 Enviando notificación al administrador...");
     
     emailController.sendReviewNotification({
@@ -209,7 +154,7 @@ router.post('/', async (req, res) => {
       console.error('❌ Error en proceso de notificación:', error);
     });
 
-    // 4. Obtener la reseña recién creada con datos del usuario
+    // Obtener la reseña recién creada CON FECHA FORMATEADA
     let nuevaResenia = null;
     try {
       const [reseniaRows] = await db.execute(
@@ -217,8 +162,14 @@ router.post('/', async (req, res) => {
           r.id_resenia,
           r.comentario_resenia,
           r.calificacion_resenia,
-          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_resenia,
-          TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_resenia,
+          -- FECHA FORMATEADA PARA FRONTEND
+          CONCAT(
+            DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y'),
+            ' a las ',
+            TIME_FORMAT(r.hora_resenia, '%H:%i')
+          ) as fecha_completa,
+          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_formateada,
+          TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_formateada,
           r.id_usuariofk,
           r.id_lugarfk,
           COALESCE(u.nombre_usuario, 'Usuario') as nombre_usuario
@@ -236,6 +187,7 @@ router.post('/', async (req, res) => {
         id_resenia: reseniaId,
         comentario_resenia: comentarioFinal.trim().substring(0, 50),
         calificacion_resenia: calificacionFinal.toString(),
+        fecha_completa: fecha,
         id_usuariofk: usuarioId,
         id_lugarfk: lugarId,
         nombre_usuario: usuario.nombre_usuario || "Usuario"
@@ -271,7 +223,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET - Obtener reseñas por lugar
+// GET - Obtener reseñas por lugar CON FECHAS FORMATEADAS
 router.get("/lugar/:id_lugar", async (req, res) => {
   const { id_lugar } = req.params;
 
@@ -281,8 +233,15 @@ router.get("/lugar/:id_lugar", async (req, res) => {
         r.id_resenia,
         r.comentario_resenia,
         r.calificacion_resenia,
-        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_resenia,
-        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_resenia,
+        -- FECHA COMPLETA FORMATEADA
+        CONCAT(
+          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y'),
+          ' a las ',
+          TIME_FORMAT(r.hora_resenia, '%H:%i')
+        ) as fecha_completa,
+        -- Campos separados por si el frontend los necesita
+        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_formateada,
+        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_formateada,
         r.id_usuariofk,
         r.id_lugarfk,
         COALESCE(u.nombre_usuario, 'Usuario') as nombre_usuario
@@ -304,7 +263,7 @@ router.get("/lugar/:id_lugar", async (req, res) => {
   }
 });
 
-// GET - Obtener reseñas por usuario
+// GET - Obtener reseñas por usuario CON FECHAS FORMATEADAS
 router.get("/usuario/:id_usuario", async (req, res) => {
   const { id_usuario } = req.params;
 
@@ -314,8 +273,14 @@ router.get("/usuario/:id_usuario", async (req, res) => {
         r.id_resenia,
         r.comentario_resenia,
         r.calificacion_resenia,
-        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_resenia,
-        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_resenia,
+        -- FECHA COMPLETA FORMATEADA
+        CONCAT(
+          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y'),
+          ' a las ',
+          TIME_FORMAT(r.hora_resenia, '%H:%i')
+        ) as fecha_completa,
+        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_formateada,
+        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_formateada,
         r.id_usuariofk,
         r.id_lugarfk,
         l.nombre_lugar,
@@ -339,7 +304,7 @@ router.get("/usuario/:id_usuario", async (req, res) => {
   }
 });
 
-// GET todas las reseñas
+// GET todas las reseñas CON FECHAS FORMATEADAS
 router.get("/", async (req, res) => {
   try {
     const [rows] = await db.execute(
@@ -347,8 +312,14 @@ router.get("/", async (req, res) => {
         r.id_resenia,
         r.comentario_resenia,
         r.calificacion_resenia,
-        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_resenia,
-        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_resenia,
+        -- FECHA COMPLETA FORMATEADA
+        CONCAT(
+          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y'),
+          ' a las ',
+          TIME_FORMAT(r.hora_resenia, '%H:%i')
+        ) as fecha_completa,
+        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_formateada,
+        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_formateada,
         r.id_usuariofk,
         r.id_lugarfk,
         u.nombre_usuario,
@@ -374,7 +345,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET - Obtener una reseña específica por ID
+// GET - Obtener una reseña específica por ID CON FECHA FORMATEADA
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -384,8 +355,14 @@ router.get("/:id", async (req, res) => {
         r.id_resenia,
         r.comentario_resenia,
         r.calificacion_resenia,
-        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_resenia,
-        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_resenia,
+        -- FECHA COMPLETA FORMATEADA
+        CONCAT(
+          DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y'),
+          ' a las ',
+          TIME_FORMAT(r.hora_resenia, '%H:%i')
+        ) as fecha_completa,
+        DATE_FORMAT(r.fecha_resenia, '%d/%m/%Y') as fecha_formateada,
+        TIME_FORMAT(r.hora_resenia, '%H:%i') as hora_formateada,
         r.id_usuariofk,
         r.id_lugarfk,
         u.nombre_usuario,
@@ -417,20 +394,19 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// PUT - Actualizar reseña
+// PUT - Actualizar reseña (acepta ambos formatos)
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    // Aceptar ambos formatos para edición
     const { 
       comentario_resenia, 
       calificacion_resenia,
-      comentario,  // Formato nuevo
-      calificacion // Formato nuevo
+      comentario,
+      calificacion 
     } = req.body;
 
-    const comentarioFinal = comentario || comentario_resenia;
-    const calificacionFinal = calificacion || calificacion_resenia;
+    const comentarioFinal = comentario_resenia || comentario;
+    const calificacionFinal = calificacion_resenia || calificacion;
 
     if (!comentarioFinal?.trim()) {
       return res.status(400).json({ 
@@ -449,7 +425,7 @@ router.put("/:id", async (req, res) => {
     const [result] = await db.execute(
       "UPDATE resenia SET comentario_resenia = ?, calificacion_resenia = ? WHERE id_resenia = ?",
       [
-        comentarioFinal.trim().substring(0, 50), // Limitar a 50 caracteres
+        comentarioFinal.trim().substring(0, 50),
         calificacionFinal.toString(),
         parseInt(id)
       ]
@@ -507,7 +483,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// GET - Estadísticas de reseñas por lugar (calculadas en tiempo real)
+// GET - Estadísticas de reseñas por lugar
 router.get("/estadisticas/lugar/:id_lugar", async (req, res) => {
   const { id_lugar } = req.params;
 
