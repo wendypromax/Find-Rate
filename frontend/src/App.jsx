@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { 
   FaBars, 
@@ -16,8 +16,6 @@ import {
   FaPlus,
   FaCloudUploadAlt
 } from "react-icons/fa";
-
-// Importar páginas
 import Home from "./pages/Home";
 import Conocenos from "./pages/Conocenos";
 import Registro from "./pages/Registro";
@@ -46,57 +44,8 @@ import ReporteGeneralResenas from "./pages/admin/ReporteGeneralResenas";
 import Estadisticas from "./pages/admin/Estadisticas";
 import CargaMasiva from "./pages/admin/CargaMasiva";
 
-// Componente Breadcrumbs del segundo código
-function Breadcrumbs() {
-  const location = useLocation();
-  const pathnames = location.pathname.split('/').filter(x => x);
-  
-  // No mostrar breadcrumb en la página de inicio
-  if (location.pathname === "/") return null;
-
-  return (
-    <div className="px-4 md:px-8 py-3 bg-slate-50 border-b border-slate-200">
-      <div className="flex items-center text-sm text-slate-600">
-        <Link 
-          to="/" 
-          className="hover:text-indigo-600 hover:underline"
-        >
-          Inicio
-        </Link>
-        
-        {pathnames.map((name, index) => {
-          const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
-          const isLast = index === pathnames.length - 1;
-          const formattedName = name
-            .replace(/-/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase());
-          
-          return (
-            <span key={name} className="flex items-center">
-              <span className="mx-2">/</span>
-              {isLast ? (
-                <span className="font-semibold text-slate-900">
-                  {formattedName}
-                </span>
-              ) : (
-                <Link 
-                  to={routeTo} 
-                  className="hover:text-indigo-600 hover:underline"
-                >
-                  {formattedName}
-                </Link>
-              )}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function App() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
@@ -129,7 +78,7 @@ function App() {
     setUser(userData);
     setProfilePic(userData.foto_usuario || null);
     localStorage.setItem("user", JSON.stringify(userData));
-    navigate("/");
+    navigate("/"); // Redirigir al inicio
   };
 
   // Cerrar sesión
@@ -167,102 +116,39 @@ function App() {
 
   const { isAdmin, isEmpresario, isUsuario } = getRoleInfo();
 
-  // Determinar si mostrar footer (no mostrar en página de inicio)
-  const showFooter = location.pathname !== "/";
-
   return (
     <>
-      {/* Header principal - Versión fusionada */}
+      {/* Header principal - Aparece SIEMPRE */}
       <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 py-3 md:py-4 bg-white border-b border-slate-200 shadow-sm">
         {/* Logo y nombre de la app - Izquierda */}
         <div className="flex items-center space-x-3">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="relative w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm md:text-lg font-bold">★</span>
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-              Find<span className="text-indigo-600">&</span>Rate
-            </h1>
-          </Link>
+          <div className="relative w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <span className="text-white text-sm md:text-lg font-bold">★</span>
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900">
+            Find<span className="text-indigo-600">&</span>Rate
+          </h1>
         </div>
 
-        {/* Navegación central - Versión del segundo código pero adaptada */}
-        <nav className="hidden md:flex items-center space-x-2">
-          <NavLink 
-            to="/" 
-            className={({isActive}) => 
-              `px-4 py-2 rounded-lg font-medium transition-colors ${
-                isActive 
-                  ? 'bg-slate-900 text-white' 
-                  : 'text-slate-700 hover:text-indigo-600 hover:bg-slate-50'
-              }`
-            }
-          >
-            Inicio
-          </NavLink>
-          
-          <NavLink 
-            to="/conocenos" 
-            className={({isActive}) => 
-              `px-4 py-2 rounded-lg font-medium transition-colors ${
-                isActive 
-                  ? 'bg-slate-900 text-white' 
-                  : 'text-slate-700 hover:text-indigo-600 hover:bg-slate-50'
-              }`
-            }
-          >
-            Conócenos
-          </NavLink>
+        {/* Navegación central - Solo muestra links cuando NO hay usuario */}
+        {!user && (
+          <nav className="hidden md:flex space-x-6 items-center">
+            <Link to="/" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">
+              Inicio
+            </Link>
+            <Link to="/conocenos" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">
+              Conócenos
+            </Link>
+            <Link to="/registro" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">
+              Registro
+            </Link>
+            <Link to="/login" className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition duration-200 font-semibold">
+              Iniciar Sesión
+            </Link>
+          </nav>
+        )}
 
-          {/* Mostrar Registro y Login solo cuando NO hay usuario */}
-          {!user && (
-            <>
-              <NavLink 
-                to="/registro" 
-                className={({isActive}) => 
-                  `px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-slate-900 text-white' 
-                      : 'text-slate-700 hover:text-indigo-600 hover:bg-slate-50'
-                  }`
-                }
-              >
-                Registro
-              </NavLink>
-              
-              <NavLink 
-                to="/login"
-                className={({isActive}) => 
-                  `px-6 py-2 rounded-lg font-semibold transition-colors ${
-                    isActive 
-                      ? 'bg-slate-900 text-white' 
-                      : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'
-                  }`
-                }
-              >
-                Login
-              </NavLink>
-            </>
-          )}
-
-          {/* Mostrar Mi Panel cuando HAY usuario */}
-          {user && (
-            <NavLink
-              to="/dashboard"
-              className={({isActive}) => 
-                `ml-2 px-6 py-2 rounded-lg font-semibold transition-colors ${
-                  isActive 
-                    ? 'bg-slate-900 text-white' 
-                    : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'
-                }`
-              }
-            >
-              Mi Panel
-            </NavLink>
-          )}
-        </nav>
-
-        {/* Navegación derecha - Solo cuando HAY usuario (del primer código) */}
+        {/* Navegación derecha - Solo cuando HAY usuario */}
         {user && (
           <div className="flex items-center space-x-4">
             {/* Menú hamburguesa - Solo visible en móvil */}
@@ -467,9 +353,6 @@ function App() {
         )}
       </header>
 
-      {/* Breadcrumbs - Del segundo código */}
-      <Breadcrumbs />
-
       {/* Menú lateral hamburguesa - Solo para usuarios logueados en móvil */}
       {user && menuOpen && (
         <div 
@@ -670,7 +553,7 @@ function App() {
       )}
 
       {/* Contenido principal con padding para evitar superposición */}
-      <main className={`min-h-screen pb-16 ${user ? 'md:pb-0' : ''}`}>
+      <div className={`pb-16 ${user ? 'md:pb-0' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/conocenos" element={<Conocenos />} />
@@ -697,6 +580,8 @@ function App() {
           <Route path="/admin/ReporteGeneralResenas" element={<ReporteGeneralResenas />} />
           <Route path="/admin/estadisticas" element={<Estadisticas />} />
           <Route path="/admin/carga-masiva" element={<CargaMasiva />} />
+
+          {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
           <Route path="/lugar/:id" element={<DetalleLugar />} />
 
           {/* Página no encontrada */}
@@ -711,30 +596,7 @@ function App() {
             }
           />
         </Routes>
-      </main>
-
-      {/* Footer - Del segundo código (no mostrar en página de inicio) */}
-      {showFooter && (
-        <footer className="bg-slate-900 text-white py-8 mt-16">
-          <div className="max-w-6xl mx-auto px-6 text-center">
-            <p className="text-sm opacity-90">
-              © 2024 Find&Rate. Todos los derechos reservados.
-            </p>
-
-            <div className="flex justify-center gap-6 mt-4 text-sm">
-              <Link to="/privacidad" className="hover:underline hover:text-indigo-400">
-                Privacidad
-              </Link>
-              <Link to="/terminos" className="hover:underline hover:text-indigo-400">
-                Términos
-              </Link>
-              <Link to="/conocenos" className="hover:underline hover:text-indigo-400">
-                Contacto
-              </Link>
-            </div>
-          </div>
-        </footer>
-      )}
+      </div>
 
       {/* Notificaciones */}
       <Toaster
