@@ -1,7 +1,17 @@
-// backend/src/controllers/authController.js - VERSIÓN COMPLETA Y FUNCIONAL
+// backend/src/controllers/authController.js - VERSIÓN COMPLETA CON JWT Y BLACKLIST
 import { pool as db } from "../config/db.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import emailController from "./emailController.js";
+
+// Configuración JWT
+const JWT_CONFIG = {
+  secret: process.env.JWT_SECRET || 'findyrate_super_secret_key_2024_change_me',
+  accessTokenExpiresIn: '15m',    // Token de acceso expira en 15 minutos
+  refreshTokenExpiresIn: '7d',    // Refresh token expira en 7 días
+  resetTokenExpiresIn: '1h'       // Token de reseteo expira en 1 hora
+};
 
 // Función auxiliar para crear columnas si no existen
 const ensureSecurityColumns = async () => {
@@ -12,7 +22,7 @@ const ensureSecurityColumns = async () => {
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_SCHEMA = DATABASE() 
         AND TABLE_NAME = 'usuario'
-        AND COLUMN_NAME IN ('login_attempts', 'account_locked', 'lock_until')
+        AND COLUMN_NAME IN ('login_attempts', 'account_locked', 'lock_until', 'refresh_token')
     `);
     
     const existingColumns = columns.map(c => c.COLUMN_NAME);
@@ -32,9 +42,47 @@ const ensureSecurityColumns = async () => {
       console.log('✅ Columna lock_until creada');
     }
     
+    if (!existingColumns.includes('refresh_token')) {
+      await db.query(`ALTER TABLE usuario ADD COLUMN refresh_token TEXT NULL`);
+      console.log('✅ Columna refresh_token creada');
+    }
+    
     return true;
   } catch (error) {
     console.warn('⚠️ Advertencia en ensureSecurityColumns:', error.message);
+    return false;
+  }
+};
+
+// Función auxiliar para crear tabla invalidated_tokens si no existe
+const ensureInvalidatedTokensTable = async () => {
+  try {
+    const [tables] = await db.query(`
+      SHOW TABLES LIKE 'invalidated_tokens'
+    `);
+    
+    if (tables.length === 0) {
+      console.log('🛠️ Creando tabla invalidated_tokens...');
+      
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS invalidated_tokens (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          token_hash VARCHAR(255) NOT NULL UNIQUE,
+          user_id INT NULL,
+          invalidated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          reason VARCHAR(50) DEFAULT 'logout',
+          INDEX idx_token_hash (token_hash),
+          INDEX idx_user_id (user_id),
+          FOREIGN KEY (user_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+        )
+      `);
+      
+      console.log('✅ Tabla invalidated_tokens creada');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error creando tabla invalidated_tokens:', error.message);
     return false;
   }
 };
@@ -86,8 +134,8 @@ export const registerUser = async (req, res) => {
     // Insertar usuario en la base de datos
     const [result] = await db.query(
       `INSERT INTO usuario 
-        (num_doc_usuario, nombre_usuario, apellido_usuario, telefono_usuario, correo_usuario, estado_usuario, password_usuario, edad_usuario, genero_usuario, id_tipo_rolfk, reset_token, reset_token_expiration, login_attempts, account_locked, lock_until)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (num_doc_usuario, nombre_usuario, apellido_usuario, telefono_usuario, correo_usuario, estado_usuario, password_usuario, edad_usuario, genero_usuario, id_tipo_rolfk, reset_token, reset_token_expiration, login_attempts, account_locked, lock_until, refresh_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         num_doc_usuario,
         nombre_usuario,
@@ -103,7 +151,8 @@ export const registerUser = async (req, res) => {
         null,
         0,      // login_attempts inicial
         false,  // account_locked inicial
-        null    // lock_until inicial
+        null,   // lock_until inicial
+        null    // refresh_token inicial
       ]
     );
 
@@ -160,7 +209,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// 🧩 Inicio de sesión CON BLOQUEO TEMPORAL - VERSIÓN COMPLETA
+// 🧩 Inicio de sesión CON BLOQUEO TEMPORAL Y JWT
 export const loginUser = async (req, res) => {
   console.log('🔑 LOGIN: Iniciando proceso de login...');
   console.log('📧 Email recibido:', req.body.correo_usuario);
@@ -334,7 +383,42 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    // Preparar datos del usuario para respuesta (excluir información sensible)
+    // ========== GENERAR TOKENS JWT ==========
+    console.log('🔐 LOGIN: Generando tokens JWT...');
+
+    // 1. Generar Access Token (expira en 15 minutos)
+    const accessToken = jwt.sign(
+      {
+        userId: user.id_usuario,
+        email: user.correo_usuario,
+        name: user.nombre_usuario,
+        role: user.id_tipo_rolfk
+      },
+      JWT_CONFIG.secret,
+      { expiresIn: JWT_CONFIG.accessTokenExpiresIn }
+    );
+
+    // 2. Generar Refresh Token (expira en 7 días)
+    const refreshToken = jwt.sign(
+      { userId: user.id_usuario },
+      JWT_CONFIG.secret,
+      { expiresIn: JWT_CONFIG.refreshTokenExpiresIn }
+    );
+
+    console.log('✅ LOGIN: Tokens generados exitosamente');
+
+    // 3. Guardar refresh token en la base de datos
+    try {
+      await db.query(
+        `UPDATE usuario SET refresh_token = ? WHERE id_usuario = ?`,
+        [refreshToken, user.id_usuario]
+      );
+      console.log('💾 LOGIN: Refresh token guardado en base de datos');
+    } catch (tokenError) {
+      console.warn('⚠️ LOGIN: No se pudo guardar refresh token en BD:', tokenError.message);
+    }
+
+    // Preparar datos del usuario para respuesta
     const userResponse = {
       id_usuario: user.id_usuario,
       num_doc_usuario: user.num_doc_usuario,
@@ -350,12 +434,20 @@ export const loginUser = async (req, res) => {
       account_locked: false
     };
 
-    console.log(`🎉 LOGIN: Sesión iniciada exitosamente para ${user.nombre_usuario} (${user.correo_usuario})`);
-    
+    console.log(`🎉 LOGIN: Sesión iniciada exitosamente para ${user.nombre_usuario}`);
+
     return res.status(200).json({
       success: true,
       message: "Inicio de sesión exitoso. ¡Bienvenido!",
       user: userResponse,
+      tokens: {
+        accessToken,
+        refreshToken,
+        accessTokenExpiresIn: JWT_CONFIG.accessTokenExpiresIn,
+        refreshTokenExpiresIn: JWT_CONFIG.refreshTokenExpiresIn,
+        accessTokenExpiresAt: new Date(Date.now() + 15 * 60000).toISOString(), // 15 minutos
+        refreshTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60000).toISOString() // 7 días
+      },
       timestamp: new Date().toISOString()
     });
 
@@ -365,6 +457,239 @@ export const loginUser = async (req, res) => {
       message: "Error interno del servidor al procesar tu solicitud",
       errorType: "server_error",
       timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// 🧩 FUNCIÓN PARA REFRESCAR TOKEN
+export const refreshAccessToken = async (req, res) => {
+  console.log('🔄 REFRESH TOKEN: Refrescando token de acceso...');
+  
+  const { refreshToken } = req.body;
+  
+  if (!refreshToken) {
+    return res.status(400).json({
+      success: false,
+      message: "Refresh token es requerido",
+      errorType: "missing_refresh_token"
+    });
+  }
+  
+  try {
+    // Verificar el refresh token
+    const decoded = jwt.verify(refreshToken, JWT_CONFIG.secret);
+    
+    // Verificar si el token existe en la base de datos (seguridad adicional)
+    const [rows] = await db.query(
+      "SELECT id_usuario, correo_usuario, nombre_usuario, id_tipo_rolfk FROM usuario WHERE id_usuario = ? AND refresh_token = ?",
+      [decoded.userId, refreshToken]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token inválido o expirado",
+        errorType: "invalid_refresh_token"
+      });
+    }
+    
+    const user = rows[0];
+    
+    // Generar nuevo access token
+    const newAccessToken = jwt.sign(
+      {
+        userId: user.id_usuario,
+        email: user.correo_usuario,
+        name: user.nombre_usuario,
+        role: user.id_tipo_rolfk
+      },
+      JWT_CONFIG.secret,
+      { expiresIn: JWT_CONFIG.accessTokenExpiresIn }
+    );
+    
+    console.log('✅ REFRESH TOKEN: Nuevo access token generado para:', user.correo_usuario);
+    
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+      expiresIn: JWT_CONFIG.accessTokenExpiresIn,
+      expiresAt: new Date(Date.now() + 15 * 60000).toISOString(), // 15 minutos
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ REFRESH TOKEN: Error:', error.message);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token expirado. Por favor inicia sesión nuevamente.",
+        errorType: "refresh_token_expired"
+      });
+    }
+    
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token inválido",
+      errorType: "invalid_token"
+    });
+  }
+};
+
+// 🧩 FUNCIÓN PARA LOGOUT CON BLACKLIST
+export const logoutUser = async (req, res) => {
+  const { userId, refreshToken, accessToken } = req.body;
+  
+  console.log('🚪 LOGOUT: Cerrando sesión para usuario ID:', userId);
+  console.log('📋 LOGOUT: Tokens recibidos - Access:', accessToken ? 'SÍ' : 'NO', 'Refresh:', refreshToken ? 'SÍ' : 'NO');
+  
+  try {
+    // Asegurar que la tabla invalidated_tokens existe
+    await ensureInvalidatedTokensTable();
+    
+    let invalidatedAccess = false;
+    let invalidatedRefresh = false;
+    
+    if (userId) {
+      // ========== INVALIDAR ACCESS TOKEN ==========
+      if (accessToken) {
+        try {
+          // Calcular hash del token para almacenarlo
+          const tokenHash = crypto.createHash('sha256').update(accessToken).digest('hex');
+          
+          // Guardar en blacklist
+          await db.query(
+            `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+             VALUES (?, ?, 'logout') 
+             ON DUPLICATE KEY UPDATE invalidated_at = NOW()`,
+            [tokenHash, userId]
+          );
+          
+          console.log('✅ LOGOUT: Access token agregado a blacklist');
+          invalidatedAccess = true;
+          
+        } catch (hashError) {
+          console.warn('⚠️ LOGOUT: No se pudo agregar access token a blacklist:', hashError.message);
+        }
+      }
+      
+      // ========== INVALIDAR REFRESH TOKEN ==========
+      if (refreshToken) {
+        try {
+          // 1. Eliminar refresh token de la tabla usuario
+          const [result] = await db.query(
+            "UPDATE usuario SET refresh_token = NULL WHERE id_usuario = ? AND refresh_token = ?",
+            [userId, refreshToken]
+          );
+          
+          if (result.affectedRows > 0) {
+            console.log('✅ LOGOUT: Refresh token eliminado de la base de datos');
+            invalidatedRefresh = true;
+          } else {
+            console.log('⚠️ LOGOUT: Refresh token no encontrado o ya eliminado');
+          }
+          
+          // 2. También agregar refresh token a blacklist por seguridad
+          const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+          await db.query(
+            `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+             VALUES (?, ?, 'logout_refresh') 
+             ON DUPLICATE KEY UPDATE invalidated_at = NOW()`,
+            [refreshTokenHash, userId]
+          );
+          
+        } catch (refreshError) {
+          console.warn('⚠️ LOGOUT: Error al invalidar refresh token:', refreshError.message);
+        }
+      }
+      
+      // ========== INVALIDAR TODOS LOS TOKENS DEL USUARIO (OPCIONAL) ==========
+      // Esto invalida cualquier token que el usuario pudiera tener
+      try {
+        // Marcar todos los tokens existentes del usuario como expirados
+        await db.query(
+          "UPDATE usuario SET token_expires_at = NOW() WHERE id_usuario = ?",
+          [userId]
+        );
+      } catch (expireError) {
+        // Ignorar error si la columna no existe
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: "Sesión cerrada exitosamente. Todos los tokens han sido invalidados.",
+      invalidated: {
+        accessToken: invalidatedAccess,
+        refreshToken: invalidatedRefresh
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ LOGOUT: Error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error al cerrar sesión",
+      errorType: "server_error",
+      details: error.message
+    });
+  }
+};
+
+// 🧩 FUNCIÓN PARA LOGOUT DE TODAS LAS SESIONES (invalida todos los tokens de un usuario)
+export const logoutAllSessions = async (req, res) => {
+  const { userId } = req.body;
+  
+  console.log('🚪🚪 LOGOUT ALL: Cerrando TODAS las sesiones para usuario ID:', userId);
+  
+  try {
+    // Asegurar que la tabla invalidated_tokens existe
+    await ensureInvalidatedTokensTable();
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de usuario es requerido",
+        errorType: "missing_user_id"
+      });
+    }
+    
+    // 1. Invalidar todos los refresh tokens del usuario
+    await db.query(
+      "UPDATE usuario SET refresh_token = NULL WHERE id_usuario = ?",
+      [userId]
+    );
+    
+    // 2. Marcar todos los tokens del usuario como expirados
+    await db.query(
+      "UPDATE usuario SET token_expires_at = NOW() WHERE id_usuario = ?",
+      [userId]
+    );
+    
+    // 3. Agregar un registro en blacklist para invalidar cualquier token futuro
+    const allTokensHash = crypto.createHash('sha256').update(`all_tokens_${userId}_${Date.now()}`).digest('hex');
+    await db.query(
+      `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+       VALUES (?, ?, 'logout_all_sessions')`,
+      [allTokensHash, userId]
+    );
+    
+    console.log(`✅ LOGOUT ALL: Todas las sesiones cerradas para usuario ${userId}`);
+    
+    res.json({
+      success: true,
+      message: "Todas las sesiones han sido cerradas exitosamente.",
+      userId: userId,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ LOGOUT ALL: Error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error al cerrar todas las sesiones",
+      errorType: "server_error"
     });
   }
 };
@@ -387,7 +712,7 @@ export const getUserById = async (req, res) => {
     
     // Ocultar información sensible
     const user = rows[0];
-    const { password_usuario, reset_token, ...safeUser } = user;
+    const { password_usuario, reset_token, refresh_token, ...safeUser } = user;
     
     console.log('✅ GET USER BY ID: Usuario encontrado:', safeUser.nombre_usuario);
     res.json({
@@ -659,6 +984,194 @@ export const resetLoginAttempts = async (req, res) => {
       success: false,
       message: "Error al reiniciar el contador de intentos",
       errorType: "server_error"
+    });
+  }
+};
+
+// 🧩 FUNCIÓN ADICIONAL: Verificar token (para middleware - versión simplificada)
+export const verifyTokenMiddleware = async (req, res, next) => {
+  console.log('🔐 TOKEN MIDDLEWARE: Verificando token...');
+  
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('❌ TOKEN MIDDLEWARE: Token no proporcionado');
+    return res.status(401).json({
+      success: false,
+      message: "Acceso denegado. Token no proporcionado.",
+      errorType: "no_token_provided"
+    });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  
+  try {
+    // Verificar token JWT
+    const decoded = jwt.verify(token, JWT_CONFIG.secret);
+    
+    // Verificar blacklist
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [invalidatedRows] = await db.query(
+      "SELECT id FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    if (invalidatedRows.length > 0) {
+      console.log('❌ TOKEN MIDDLEWARE: Token en blacklist');
+      return res.status(401).json({
+        success: false,
+        message: "Token invalidado (sesión cerrada)",
+        errorType: "token_invalidated"
+      });
+    }
+    
+    // Verificar usuario
+    const [userRows] = await db.query(
+      "SELECT id_usuario, estado_usuario FROM usuario WHERE id_usuario = ?",
+      [decoded.userId]
+    );
+    
+    if (userRows.length === 0 || userRows[0].estado_usuario !== 'activo') {
+      return res.status(401).json({
+        success: false,
+        message: "Usuario no encontrado o inactivo",
+        errorType: "user_inactive"
+      });
+    }
+    
+    req.user = decoded;
+    console.log('✅ TOKEN MIDDLEWARE: Token válido para:', decoded.email);
+    next();
+    
+  } catch (error) {
+    console.error('❌ TOKEN MIDDLEWARE:', error.message);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: "Token expirado",
+        errorType: "token_expired"
+      });
+    }
+    
+    return res.status(401).json({
+      success: false,
+      message: "Token inválido",
+      errorType: "invalid_token"
+    });
+  }
+};
+
+// 🧩 FUNCIÓN ADICIONAL: Verificar si usuario está autenticado
+export const checkAuthStatus = async (req, res) => {
+  console.log('🔍 CHECK AUTH STATUS: Verificando estado de autenticación...');
+  
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(200).json({
+      authenticated: false,
+      message: "No autenticado - Token no proporcionado"
+    });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  
+  try {
+    const decoded = jwt.verify(token, JWT_CONFIG.secret);
+    
+    // Verificar blacklist
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [invalidatedRows] = await db.query(
+      "SELECT id FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    if (invalidatedRows.length > 0) {
+      return res.status(200).json({
+        authenticated: false,
+        message: "Token invalidado (sesión cerrada)"
+      });
+    }
+    
+    // Verificar si el usuario existe
+    const [rows] = await db.query(
+      "SELECT id_usuario, nombre_usuario, correo_usuario, id_tipo_rolfk, estado_usuario FROM usuario WHERE id_usuario = ?",
+      [decoded.userId]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(200).json({
+        authenticated: false,
+        message: "Usuario no encontrado en la base de datos"
+      });
+    }
+    
+    const user = rows[0];
+    
+    if (user.estado_usuario !== 'activo') {
+      return res.status(200).json({
+        authenticated: false,
+        message: "Cuenta inactiva"
+      });
+    }
+    
+    res.json({
+      authenticated: true,
+      user: {
+        id_usuario: user.id_usuario,
+        nombre_usuario: user.nombre_usuario,
+        correo_usuario: user.correo_usuario,
+        id_tipo_rolfk: user.id_tipo_rolfk,
+        estado_usuario: user.estado_usuario
+      },
+      tokenInfo: {
+        expiresAt: new Date(decoded.exp * 1000).toISOString(),
+        issuedAt: new Date(decoded.iat * 1000).toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.log('⚠️ CHECK AUTH STATUS: Token inválido o expirado:', error.message);
+    res.status(200).json({
+      authenticated: false,
+      message: error.name === 'TokenExpiredError' ? "Token expirado" : "Token inválido"
+    });
+  }
+};
+
+// 🧩 FUNCIÓN ADICIONAL: Verificar tokens en blacklist (para debugging)
+export const checkTokenBlacklist = async (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: "Token es requerido"
+    });
+  }
+  
+  try {
+    await ensureInvalidatedTokensTable();
+    
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [rows] = await db.query(
+      "SELECT * FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    res.json({
+      success: true,
+      isBlacklisted: rows.length > 0,
+      blacklistEntries: rows,
+      tokenHash: tokenHash
+    });
+    
+  } catch (error) {
+    console.error('Error verificando blacklist:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error al verificar blacklist"
     });
   }
 };
