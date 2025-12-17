@@ -1,7 +1,8 @@
-// backend/src/controllers/authController.js - VERSIÓN COMPLETA CON JWT
+// backend/src/controllers/authController.js - VERSIÓN COMPLETA CON JWT Y BLACKLIST
 import { pool as db } from "../config/db.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"; // <-- NUEVO: Importar JWT
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import emailController from "./emailController.js";
 
 // Configuración JWT
@@ -49,6 +50,39 @@ const ensureSecurityColumns = async () => {
     return true;
   } catch (error) {
     console.warn('⚠️ Advertencia en ensureSecurityColumns:', error.message);
+    return false;
+  }
+};
+
+// Función auxiliar para crear tabla invalidated_tokens si no existe
+const ensureInvalidatedTokensTable = async () => {
+  try {
+    const [tables] = await db.query(`
+      SHOW TABLES LIKE 'invalidated_tokens'
+    `);
+    
+    if (tables.length === 0) {
+      console.log('🛠️ Creando tabla invalidated_tokens...');
+      
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS invalidated_tokens (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          token_hash VARCHAR(255) NOT NULL UNIQUE,
+          user_id INT NULL,
+          invalidated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          reason VARCHAR(50) DEFAULT 'logout',
+          INDEX idx_token_hash (token_hash),
+          INDEX idx_user_id (user_id),
+          FOREIGN KEY (user_id) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+        )
+      `);
+      
+      console.log('✅ Tabla invalidated_tokens creada');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error creando tabla invalidated_tokens:', error.message);
     return false;
   }
 };
@@ -502,25 +536,93 @@ export const refreshAccessToken = async (req, res) => {
   }
 };
 
-// 🧩 FUNCIÓN PARA LOGOUT
+// 🧩 FUNCIÓN PARA LOGOUT CON BLACKLIST
 export const logoutUser = async (req, res) => {
-  const { userId, refreshToken } = req.body;
+  const { userId, refreshToken, accessToken } = req.body;
   
   console.log('🚪 LOGOUT: Cerrando sesión para usuario ID:', userId);
+  console.log('📋 LOGOUT: Tokens recibidos - Access:', accessToken ? 'SÍ' : 'NO', 'Refresh:', refreshToken ? 'SÍ' : 'NO');
   
   try {
-    if (refreshToken && userId) {
-      // Invalidar el refresh token en la base de datos
-      await db.query(
-        "UPDATE usuario SET refresh_token = NULL WHERE id_usuario = ? AND refresh_token = ?",
-        [userId, refreshToken]
-      );
-      console.log('✅ LOGOUT: Refresh token invalidado');
+    // Asegurar que la tabla invalidated_tokens existe
+    await ensureInvalidatedTokensTable();
+    
+    let invalidatedAccess = false;
+    let invalidatedRefresh = false;
+    
+    if (userId) {
+      // ========== INVALIDAR ACCESS TOKEN ==========
+      if (accessToken) {
+        try {
+          // Calcular hash del token para almacenarlo
+          const tokenHash = crypto.createHash('sha256').update(accessToken).digest('hex');
+          
+          // Guardar en blacklist
+          await db.query(
+            `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+             VALUES (?, ?, 'logout') 
+             ON DUPLICATE KEY UPDATE invalidated_at = NOW()`,
+            [tokenHash, userId]
+          );
+          
+          console.log('✅ LOGOUT: Access token agregado a blacklist');
+          invalidatedAccess = true;
+          
+        } catch (hashError) {
+          console.warn('⚠️ LOGOUT: No se pudo agregar access token a blacklist:', hashError.message);
+        }
+      }
+      
+      // ========== INVALIDAR REFRESH TOKEN ==========
+      if (refreshToken) {
+        try {
+          // 1. Eliminar refresh token de la tabla usuario
+          const [result] = await db.query(
+            "UPDATE usuario SET refresh_token = NULL WHERE id_usuario = ? AND refresh_token = ?",
+            [userId, refreshToken]
+          );
+          
+          if (result.affectedRows > 0) {
+            console.log('✅ LOGOUT: Refresh token eliminado de la base de datos');
+            invalidatedRefresh = true;
+          } else {
+            console.log('⚠️ LOGOUT: Refresh token no encontrado o ya eliminado');
+          }
+          
+          // 2. También agregar refresh token a blacklist por seguridad
+          const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+          await db.query(
+            `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+             VALUES (?, ?, 'logout_refresh') 
+             ON DUPLICATE KEY UPDATE invalidated_at = NOW()`,
+            [refreshTokenHash, userId]
+          );
+          
+        } catch (refreshError) {
+          console.warn('⚠️ LOGOUT: Error al invalidar refresh token:', refreshError.message);
+        }
+      }
+      
+      // ========== INVALIDAR TODOS LOS TOKENS DEL USUARIO (OPCIONAL) ==========
+      // Esto invalida cualquier token que el usuario pudiera tener
+      try {
+        // Marcar todos los tokens existentes del usuario como expirados
+        await db.query(
+          "UPDATE usuario SET token_expires_at = NOW() WHERE id_usuario = ?",
+          [userId]
+        );
+      } catch (expireError) {
+        // Ignorar error si la columna no existe
+      }
     }
     
     res.json({
       success: true,
-      message: "Sesión cerrada exitosamente",
+      message: "Sesión cerrada exitosamente. Todos los tokens han sido invalidados.",
+      invalidated: {
+        accessToken: invalidatedAccess,
+        refreshToken: invalidatedRefresh
+      },
       timestamp: new Date().toISOString()
     });
     
@@ -529,6 +631,64 @@ export const logoutUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error al cerrar sesión",
+      errorType: "server_error",
+      details: error.message
+    });
+  }
+};
+
+// 🧩 FUNCIÓN PARA LOGOUT DE TODAS LAS SESIONES (invalida todos los tokens de un usuario)
+export const logoutAllSessions = async (req, res) => {
+  const { userId } = req.body;
+  
+  console.log('🚪🚪 LOGOUT ALL: Cerrando TODAS las sesiones para usuario ID:', userId);
+  
+  try {
+    // Asegurar que la tabla invalidated_tokens existe
+    await ensureInvalidatedTokensTable();
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de usuario es requerido",
+        errorType: "missing_user_id"
+      });
+    }
+    
+    // 1. Invalidar todos los refresh tokens del usuario
+    await db.query(
+      "UPDATE usuario SET refresh_token = NULL WHERE id_usuario = ?",
+      [userId]
+    );
+    
+    // 2. Marcar todos los tokens del usuario como expirados
+    await db.query(
+      "UPDATE usuario SET token_expires_at = NOW() WHERE id_usuario = ?",
+      [userId]
+    );
+    
+    // 3. Agregar un registro en blacklist para invalidar cualquier token futuro
+    const allTokensHash = crypto.createHash('sha256').update(`all_tokens_${userId}_${Date.now()}`).digest('hex');
+    await db.query(
+      `INSERT INTO invalidated_tokens (token_hash, user_id, reason) 
+       VALUES (?, ?, 'logout_all_sessions')`,
+      [allTokensHash, userId]
+    );
+    
+    console.log(`✅ LOGOUT ALL: Todas las sesiones cerradas para usuario ${userId}`);
+    
+    res.json({
+      success: true,
+      message: "Todas las sesiones han sido cerradas exitosamente.",
+      userId: userId,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ LOGOUT ALL: Error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error al cerrar todas las sesiones",
       errorType: "server_error"
     });
   }
@@ -828,11 +988,10 @@ export const resetLoginAttempts = async (req, res) => {
   }
 };
 
-// 🧩 FUNCIÓN ADICIONAL: Verificar token (para middleware)
-export const verifyTokenMiddleware = (req, res, next) => {
+// 🧩 FUNCIÓN ADICIONAL: Verificar token (para middleware - versión simplificada)
+export const verifyTokenMiddleware = async (req, res, next) => {
   console.log('🔐 TOKEN MIDDLEWARE: Verificando token...');
   
-  // Obtener token del header Authorization
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -847,37 +1006,58 @@ export const verifyTokenMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   
   try {
-    // Verificar token
+    // Verificar token JWT
     const decoded = jwt.verify(token, JWT_CONFIG.secret);
-    console.log('✅ TOKEN MIDDLEWARE: Token válido para usuario:', decoded.email);
     
-    // Agregar información del usuario al request
+    // Verificar blacklist
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [invalidatedRows] = await db.query(
+      "SELECT id FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    if (invalidatedRows.length > 0) {
+      console.log('❌ TOKEN MIDDLEWARE: Token en blacklist');
+      return res.status(401).json({
+        success: false,
+        message: "Token invalidado (sesión cerrada)",
+        errorType: "token_invalidated"
+      });
+    }
+    
+    // Verificar usuario
+    const [userRows] = await db.query(
+      "SELECT id_usuario, estado_usuario FROM usuario WHERE id_usuario = ?",
+      [decoded.userId]
+    );
+    
+    if (userRows.length === 0 || userRows[0].estado_usuario !== 'activo') {
+      return res.status(401).json({
+        success: false,
+        message: "Usuario no encontrado o inactivo",
+        errorType: "user_inactive"
+      });
+    }
+    
     req.user = decoded;
+    console.log('✅ TOKEN MIDDLEWARE: Token válido para:', decoded.email);
     next();
     
   } catch (error) {
-    console.error('❌ TOKEN MIDDLEWARE: Error verificando token:', error.message);
+    console.error('❌ TOKEN MIDDLEWARE:', error.message);
     
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: "Token expirado. Usa el refresh token para obtener uno nuevo.",
+        message: "Token expirado",
         errorType: "token_expired"
-      });
-    }
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: "Token inválido.",
-        errorType: "invalid_token"
       });
     }
     
     return res.status(401).json({
       success: false,
-      message: "Token de autenticación inválido.",
-      errorType: "authentication_failed"
+      message: "Token inválido",
+      errorType: "invalid_token"
     });
   }
 };
@@ -891,7 +1071,7 @@ export const checkAuthStatus = async (req, res) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(200).json({
       authenticated: false,
-      message: "No autenticado"
+      message: "No autenticado - Token no proporcionado"
     });
   }
   
@@ -900,9 +1080,23 @@ export const checkAuthStatus = async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_CONFIG.secret);
     
-    // Verificar si el usuario aún existe en la base de datos
+    // Verificar blacklist
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [invalidatedRows] = await db.query(
+      "SELECT id FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    if (invalidatedRows.length > 0) {
+      return res.status(200).json({
+        authenticated: false,
+        message: "Token invalidado (sesión cerrada)"
+      });
+    }
+    
+    // Verificar si el usuario existe
     const [rows] = await db.query(
-      "SELECT id_usuario, nombre_usuario, correo_usuario, id_tipo_rolfk FROM usuario WHERE id_usuario = ?",
+      "SELECT id_usuario, nombre_usuario, correo_usuario, id_tipo_rolfk, estado_usuario FROM usuario WHERE id_usuario = ?",
       [decoded.userId]
     );
     
@@ -915,13 +1109,21 @@ export const checkAuthStatus = async (req, res) => {
     
     const user = rows[0];
     
+    if (user.estado_usuario !== 'activo') {
+      return res.status(200).json({
+        authenticated: false,
+        message: "Cuenta inactiva"
+      });
+    }
+    
     res.json({
       authenticated: true,
       user: {
         id_usuario: user.id_usuario,
         nombre_usuario: user.nombre_usuario,
         correo_usuario: user.correo_usuario,
-        id_tipo_rolfk: user.id_tipo_rolfk
+        id_tipo_rolfk: user.id_tipo_rolfk,
+        estado_usuario: user.estado_usuario
       },
       tokenInfo: {
         expiresAt: new Date(decoded.exp * 1000).toISOString(),
@@ -933,7 +1135,43 @@ export const checkAuthStatus = async (req, res) => {
     console.log('⚠️ CHECK AUTH STATUS: Token inválido o expirado:', error.message);
     res.status(200).json({
       authenticated: false,
-      message: "Token inválido o expirado"
+      message: error.name === 'TokenExpiredError' ? "Token expirado" : "Token inválido"
+    });
+  }
+};
+
+// 🧩 FUNCIÓN ADICIONAL: Verificar tokens en blacklist (para debugging)
+export const checkTokenBlacklist = async (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: "Token es requerido"
+    });
+  }
+  
+  try {
+    await ensureInvalidatedTokensTable();
+    
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const [rows] = await db.query(
+      "SELECT * FROM invalidated_tokens WHERE token_hash = ?",
+      [tokenHash]
+    );
+    
+    res.json({
+      success: true,
+      isBlacklisted: rows.length > 0,
+      blacklistEntries: rows,
+      tokenHash: tokenHash
+    });
+    
+  } catch (error) {
+    console.error('Error verificando blacklist:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error al verificar blacklist"
     });
   }
 };
