@@ -9,7 +9,6 @@ const Registro = () => {
     num_doc_usuario: "",
     nombre: "",
     apellido: "",
-    num_doc_usuario: "",
     email: "",
     telefono: "",
     password: "",

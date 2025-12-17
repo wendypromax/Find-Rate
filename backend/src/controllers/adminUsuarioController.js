@@ -5,7 +5,8 @@ import {
   eliminarUsuarioService
 } from "../services/adminUsuarioService.js";
 
-import db from "../config/db.js"; // ✅ IMPORTANTE para el SET
+import { pool } from "../config/db.js";
+
 
 // 🔹 Listar usuarios
 export const obtenerUsuarios = async (req, res) => {
