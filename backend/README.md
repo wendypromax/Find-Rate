@@ -180,3 +180,19 @@ Ver [INDICE_DOCUMENTACION.md](../INDICE_DOCUMENTACION.md) para más recursos.
 ---
 
 **Estado:** ✅ Funcional y listo para producción
+
+## 🛡️ SEGURIDAD IMPLEMENTADA
+
+### 🔒 Protección en Base de Datos
+La aplicación utiliza un usuario MySQL con permisos estrictamente limitados:
+
+```sql
+-- Usuario de aplicación con permisos limitados
+GRANT SELECT, INSERT, UPDATE ON findyrate.* TO 'findyrate_app'@'localhost';
+
+-- Permisos EXPLÍCITAMENTE DENEGADOS:
+-- ❌ NO DELETE  → Eliminación física bloqueada
+-- ❌ NO DROP    → Borrado de tablas bloqueado  
+-- ❌ NO ALTER   → Modificación de estructura bloqueada
+-- ❌ NO CREATE  → Creación de tablas bloqueada
+

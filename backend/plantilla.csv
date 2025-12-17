@@ -1,0 +1,10 @@
+# PLANTILLA PARA CARGA MASIVA DE LUGARES
+# ESTRUCTURA DE TU TABLA: lugar
+# Campos REQUERIDOS: nit, nombre, localidad, direccion, red_social, tipo_entrada
+# Campos OPCIONALES: id_reseniafk, id_tipo_negociofk, id_tipo_serviciofk, imagen_lugar
+# NOTA: id_usuariofk se asigna automáticamente según el empresario
+
+# nit,nombre,localidad,direccion,red_social,tipo_entrada,id_reseniafk,id_tipo_negociofk,id_tipo_serviciofk,imagen_lugar
+123456789,Restaurante El Sabor,Bogotá,Carrera 15 #90-20,www.instagram.com/elsabor,gratis,,1,2,restaurante.jpg
+987654321,Cafetería Central,Medellín,Calle 10 #45-30,www.facebook.com/cafecentral,gratis,,2,3,cafeteria.jpg
+456123789,Hotel Plaza Mayor,Cali,Avenida 6N #23-45,www.twitter.com/hotelplaza,pago,,3,1,hotel.jpg
