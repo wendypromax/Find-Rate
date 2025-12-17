@@ -20,6 +20,13 @@ const Registro = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mostrarModalConsentimiento, setMostrarModalConsentimiento] = useState(false);
+const [consentimientoAceptado, setConsentimientoAceptado] = useState(false);
+const [submitPendiente, setSubmitPendiente] = useState(false);
+const [showConsentModal, setShowConsentModal] = useState(false);
+const [consentAccepted, setConsentAccepted] = useState(false);
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,6 +57,12 @@ const Registro = () => {
     setSuccessMessage("");
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) return setErrors(validationErrors);
+// 👉 Mostrar modal de consentimiento antes de registrar
+if (!consentimientoAceptado) {
+  setMostrarModalConsentimiento(true);
+  setSubmitPendiente(true);
+  return;
+}
 
     try {
       setLoading(true);
@@ -372,6 +385,60 @@ const Registro = () => {
           </div>
         </div>
       </footer>
+      {/* Modal de consentimiento */}
+{mostrarModalConsentimiento && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+      <h2 className="text-xl font-bold mb-4">
+        Consentimiento de tratamiento de datos
+      </h2>
+
+      <p className="text-sm text-gray-600 mb-4">
+        Autorizo a <strong>Find & Rate</strong> a recolectar, almacenar y tratar mis
+        datos personales conforme a la política de privacidad y la Ley 1581 de 2012.
+      </p>
+
+      <div className="flex items-center gap-2 mb-6">
+        <input
+          type="checkbox"
+          checked={consentimientoAceptado}
+          onChange={(e) => setConsentimientoAceptado(e.target.checked)}
+        />
+        <label className="text-sm">
+          Acepto el tratamiento de mis datos personales
+        </label>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded-lg"
+          onClick={() => {
+            setMostrarModalConsentimiento(false);
+            setConsentimientoAceptado(false);
+            setSubmitPendiente(false);
+          }}
+        >
+          No acepto
+        </button>
+
+        <button
+          disabled={!consentimientoAceptado}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:bg-gray-400"
+          onClick={() => {
+            setMostrarModalConsentimiento(false);
+            if (submitPendiente) {
+              setSubmitPendiente(false);
+              document.querySelector("form").requestSubmit();
+            }
+          }}
+        >
+          Acepto y continuar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
