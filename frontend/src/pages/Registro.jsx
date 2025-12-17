@@ -9,6 +9,7 @@ const Registro = () => {
     num_doc_usuario: "",
     nombre: "",
     apellido: "",
+    num_doc_usuario: "",
     email: "",
     telefono: "",
     password: "",
@@ -20,6 +21,13 @@ const Registro = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mostrarModalConsentimiento, setMostrarModalConsentimiento] = useState(false);
+const [consentimientoAceptado, setConsentimientoAceptado] = useState(false);
+const [submitPendiente, setSubmitPendiente] = useState(false);
+const [showConsentModal, setShowConsentModal] = useState(false);
+const [consentAccepted, setConsentAccepted] = useState(false);
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,6 +58,12 @@ const Registro = () => {
     setSuccessMessage("");
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) return setErrors(validationErrors);
+// 👉 Mostrar modal de consentimiento antes de registrar
+if (!consentimientoAceptado) {
+  setMostrarModalConsentimiento(true);
+  setSubmitPendiente(true);
+  return;
+}
 
     try {
       setLoading(true);
@@ -155,177 +169,180 @@ const Registro = () => {
           )}
 
           {/* Formulario */}
-          <form className="flex flex-col gap-5 text-left" onSubmit={handleSubmit}>
-            {/* Primera fila */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Documento</label>
-                <input 
-                  type="text" 
-                  name="num_doc_usuario" 
-                  placeholder="Número de documento" 
-                  value={formData.num_doc_usuario} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.num_doc_usuario && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.num_doc_usuario}</p>}
-              </div>
+        <form className="flex flex-col gap-5 text-left" onSubmit={handleSubmit}>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Edad</label>
-                <input 
-                  type="number" 
-                  name="edad" 
-                  placeholder="Edad" 
-                  value={formData.edad} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.edad && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.edad}</p>}
-              </div>
-            </div>
+  {/* Nombre y Apellido */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Nombre</label>
+      <input 
+        type="text" 
+        name="nombre" 
+        placeholder="Nombre" 
+        value={formData.nombre} 
+        onChange={handleChange} 
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+      />
+      {errors.nombre && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.nombre}</p>}
+    </div>
 
-            {/* Segunda fila */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Nombre</label>
-                <input 
-                  type="text" 
-                  name="nombre" 
-                  placeholder="Nombre" 
-                  value={formData.nombre} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.nombre && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.nombre}</p>}
-              </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Apellido</label>
+      <input 
+        type="text" 
+        name="apellido" 
+        placeholder="Apellido" 
+        value={formData.apellido} 
+        onChange={handleChange} 
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+      />
+      {errors.apellido && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.apellido}</p>}
+    </div>
+  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Apellido</label>
-                <input 
-                  type="text" 
-                  name="apellido" 
-                  placeholder="Apellido" 
-                  value={formData.apellido} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.apellido && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.apellido}</p>}
-              </div>
-            </div>
+  {/* Edad */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Edad</label>
+    <input 
+      type="number" 
+      name="edad" 
+      placeholder="Edad" 
+      value={formData.edad} 
+      onChange={handleChange} 
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+    />
+    {errors.edad && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.edad}</p>}
+  </div>
 
-            {/* Campos individuales */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Correo electrónico</label>
-              <input 
-                type="email" 
-                name="email" 
-                placeholder="tu@correo.com" 
-                value={formData.email} 
-                onChange={handleChange} 
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.email}</p>}
-            </div>
+  {/* Género */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Género</label>
+    <div className="grid grid-cols-3 gap-3">
+      <button
+        type="button"
+        onClick={() => setFormData({...formData, genero: "mujer"})}
+        className={`py-3 rounded-xl border-2 transition-all duration-200 ${
+          formData.genero === "mujer" 
+            ? "border-pink-500 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700" 
+            : "border-gray-300 bg-white text-gray-600 hover:border-pink-300"
+        }`}
+      >
+        👩 Mujer
+      </button>
+      <button
+        type="button"
+        onClick={() => setFormData({...formData, genero: "hombre"})}
+        className={`py-3 rounded-xl border-2 transition-all duration-200 ${
+          formData.genero === "hombre" 
+            ? "border-blue-500 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700" 
+            : "border-gray-300 bg-white text-gray-600 hover:border-blue-300"
+        }`}
+      >
+        👨 Hombre
+      </button>
+      <button
+        type="button"
+        onClick={() => setFormData({...formData, genero: "otro"})}
+        className={`py-3 rounded-xl border-2 transition-all duration-200 ${
+          formData.genero === "otro" 
+            ? "border-purple-500 bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700" 
+            : "border-gray-300 bg-white text-gray-600 hover:border-purple-300"
+        }`}
+      >
+        🏳️ Otro
+      </button>
+    </div>
+    {errors.genero && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.genero}</p>}
+  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Teléfono</label>
-              <input 
-                type="tel" 
-                name="telefono" 
-                placeholder="1234567890" 
-                value={formData.telefono} 
-                onChange={handleChange} 
-                maxLength="15" 
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-              />
-              {errors.telefono && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.telefono}</p>}
-            </div>
+  {/* Documento */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Documento</label>
+    <input 
+      type="text" 
+      name="num_doc_usuario" 
+      placeholder="Número de documento" 
+      value={formData.num_doc_usuario} 
+      onChange={handleChange} 
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+    />
+    {errors.num_doc_usuario && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.num_doc_usuario}</p>}
+  </div>
 
-            {/* Contraseñas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Contraseña</label>
-                <input 
-                  type="password" 
-                  name="password" 
-                  placeholder="••••••••" 
-                  value={formData.password} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.password && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.password}</p>}
-              </div>
+  {/* Email */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Correo electrónico</label>
+    <input 
+      type="email" 
+      name="email" 
+      placeholder="tu@correo.com" 
+      value={formData.email} 
+      onChange={handleChange} 
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+    />
+    {errors.email && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.email}</p>}
+  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Confirmar</label>
-                <input 
-                  type="password" 
-                  name="confirmPassword" 
-                  placeholder="••••••••" 
-                  value={formData.confirmPassword} 
-                  onChange={handleChange} 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                />
-                {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.confirmPassword}</p>}
-              </div>
-            </div>
+  {/* Teléfono */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Teléfono</label>
+    <input 
+      type="tel" 
+      name="telefono" 
+      placeholder="1234567890" 
+      value={formData.telefono} 
+      onChange={handleChange} 
+      maxLength="15" 
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+    />
+    {errors.telefono && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.telefono}</p>}
+  </div>
 
-            {/* Género */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Género</label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData({...formData, genero: "mujer"})}
-                  className={`py-3 rounded-xl border-2 transition-all duration-200 ${
-                    formData.genero === "mujer" 
-                      ? "border-pink-500 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700" 
-                      : "border-gray-300 bg-white text-gray-600 hover:border-pink-300"
-                  }`}
-                >
-                  👩 Mujer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({...formData, genero: "hombre"})}
-                  className={`py-3 rounded-xl border-2 transition-all duration-200 ${
-                    formData.genero === "hombre" 
-                      ? "border-blue-500 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700" 
-                      : "border-gray-300 bg-white text-gray-600 hover:border-blue-300"
-                  }`}
-                >
-                  👨 Hombre
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({...formData, genero: "otro"})}
-                  className={`py-3 rounded-xl border-2 transition-all duration-200 ${
-                    formData.genero === "otro" 
-                      ? "border-purple-500 bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700" 
-                      : "border-gray-300 bg-white text-gray-600 hover:border-purple-300"
-                  }`}
-                >
-                  🏳️ Otro
-                </button>
-              </div>
-              {errors.genero && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.genero}</p>}
-            </div>
+  {/* Contraseñas */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Contraseña</label>
+      <input 
+        type="password" 
+        name="password" 
+        placeholder="••••••••" 
+        value={formData.password} 
+        onChange={handleChange} 
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+      />
+      {errors.password && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.password}</p>}
+    </div>
 
-            {/* Términos */}
-            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl">
-              <input 
-                type="checkbox" 
-                id="terms" 
-                required 
-                className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-700">
-                Acepto los <Link to="/terminos" className="text-indigo-600 hover:text-indigo-800 font-semibold">términos y condiciones</Link> y la <Link to="/privacidad" className="text-purple-600 hover:text-purple-800 font-semibold">política de privacidad</Link>.
-              </label>
-            </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 ml-2">Confirmar</label>
+      <input 
+        type="password" 
+        name="confirmPassword" 
+        placeholder="••••••••" 
+        value={formData.confirmPassword} 
+        onChange={handleChange} 
+        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+      />
+      {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 ml-2">⚠️ {errors.confirmPassword}</p>}
+    </div>
+  </div>
 
-            {/* Botón de registro */}
+  {/* Términos */}
+  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl">
+    <input 
+      type="checkbox" 
+      id="terms" 
+      required 
+      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+    <label htmlFor="terms" className="text-sm text-gray-700">
+      Acepto los <Link to="/terminos" className="text-indigo-600 hover:text-indigo-800 font-semibold">términos y condiciones</Link> y la <Link to="/privacidad" className="text-purple-600 hover:text-purple-800 font-semibold">política de privacidad</Link>.
+    </label>
+  </div>
+
+  {/* Botón */}
+  {/* (tu botón va aquí, SIN CAMBIOS) */}
+{/* Botón de registro */}
             <button 
               type="submit" 
               disabled={loading} 
@@ -347,6 +364,10 @@ const Registro = () => {
                 "✨ Crear mi cuenta"
               )}
             </button>
+</form>
+
+
+            
 
             {/* Enlace a login */}
             <div className="text-center pt-4 border-t border-gray-200">
@@ -357,7 +378,7 @@ const Registro = () => {
                 </Link>
               </p>
             </div>
-          </form>
+          
         </div>
       </div>
 
@@ -372,6 +393,60 @@ const Registro = () => {
           </div>
         </div>
       </footer>
+      {/* Modal de consentimiento */}
+{mostrarModalConsentimiento && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+      <h2 className="text-xl font-bold mb-4">
+        Consentimiento de tratamiento de datos
+      </h2>
+
+      <p className="text-sm text-gray-600 mb-4">
+        Autorizo a <strong>Find & Rate</strong> a recolectar, almacenar y tratar mis
+        datos personales conforme a la política de privacidad y la Ley 1581 de 2012.
+      </p>
+
+      <div className="flex items-center gap-2 mb-6">
+        <input
+          type="checkbox"
+          checked={consentimientoAceptado}
+          onChange={(e) => setConsentimientoAceptado(e.target.checked)}
+        />
+        <label className="text-sm">
+          Acepto el tratamiento de mis datos personales
+        </label>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded-lg"
+          onClick={() => {
+            setMostrarModalConsentimiento(false);
+            setConsentimientoAceptado(false);
+            setSubmitPendiente(false);
+          }}
+        >
+          No acepto
+        </button>
+
+        <button
+          disabled={!consentimientoAceptado}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:bg-gray-400"
+          onClick={() => {
+            setMostrarModalConsentimiento(false);
+            if (submitPendiente) {
+              setSubmitPendiente(false);
+              document.querySelector("form").requestSubmit();
+            }
+          }}
+        >
+          Acepto y continuar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
