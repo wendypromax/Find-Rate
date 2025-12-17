@@ -1,36 +1,15 @@
-import { obtenerResenasPorLugar } from "../services/reporteService.js";
+import express from "express";
+import {
+  reporteResenasPorLugar,
+  reporteGeneralResenas
+} from "../controllers/reporteController.js";
 
-export const reporteResenasPorLugar = async (req, res) => {
-  try {
-    const { idLugar } = req.query;
-    const data = await obtenerResenasPorLugar(idLugar);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al generar el reporte"
-    });
-  }
-};
-import { obtenerReporteGeneralResenas } from "../services/reporteService.js";
+const router = express.Router();
 
-export const reporteGeneralResenas = async (req, res) => {
-  try {
-    const { fechaInicio, fechaFin, idLugar, estado } = req.query;
+// Reporte por lugar (parametrizado por idLugar)
+router.get("/resenas-por-lugar", reporteResenasPorLugar);
 
-    const data = await obtenerReporteGeneralResenas(
-      fechaInicio,
-      fechaFin,
-      idLugar,
-      estado
-    );
+// Reporte general con filtros
+router.get("/general-resenas", reporteGeneralResenas);
 
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Error al generar el reporte general"
-    });
-  }
-};
+export default router;

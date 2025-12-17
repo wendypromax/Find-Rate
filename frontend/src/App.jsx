@@ -1,6 +1,15 @@
 // src/App.jsx
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+  NavLink
+} from "react-router-dom";
 import { useState, useEffect } from "react";
+
 import Home from "./pages/Home";
 import Conocenos from "./pages/Conocenos";
 import Registro from "./pages/Registro";
@@ -22,18 +31,66 @@ import EditarPerfil from "./pages/EditarPerfil";
 import DetalleLugar from "./pages/DetalleLugar";
 import MisLugares from "./pages/MisLugares";
 import MisResenias from "./pages/MisResenias";
+
 import { Toaster } from "react-hot-toast";
+
 import GestionUsuarios from "./pages/admin/GestionUsuarios";
 import ReporteResenas from "./pages/admin/ReporteResenas";
 import ReporteGeneralResenas from "./pages/admin/ReporteGeneralResenas";
 import Estadisticas from "./pages/admin/Estadisticas";
 
+function Breadcrumbs() {
+  const location = useLocation();
+  const pathnames = location.pathname.split('/').filter(x => x);
+  
+  // No mostrar breadcrumb en la página de inicio
+  if (location.pathname === "/") return null;
+
+  return (
+    <div className="px-8 py-3 bg-slate-50 border-b border-slate-200">
+      <div className="flex items-center text-sm text-slate-600">
+        <Link 
+          to="/" 
+          className="hover:text-indigo-600 hover:underline"
+        >
+          Inicio
+        </Link>
+        
+        {pathnames.map((name, index) => {
+          const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
+          const isLast = index === pathnames.length - 1;
+          const formattedName = name
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          
+          return (
+            <span key={name} className="flex items-center">
+              <span className="mx-2">/</span>
+              {isLast ? (
+                <span className="font-semibold text-slate-900">
+                  {formattedName}
+                </span>
+              ) : (
+                <Link 
+                  to={routeTo} 
+                  className="hover:text-indigo-600 hover:underline"
+                >
+                  {formattedName}
+                </Link>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
 
-  // Cargar sesión guardada
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -41,89 +98,166 @@ function App() {
     }
   }, []);
 
-  // Guardar sesión al iniciar
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    navigate("/"); // Redirigir al inicio
+    navigate("/");
   };
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200 shadow-sm">
-        <div className="flex items-center space-x-3">
-          <div className="relative w-10 h-10 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-lg font-bold">★</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Find<span className="text-indigo-600">&</span>Rate
-          </h1>
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between px-8 py-4">
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-lg font-bold">★</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Find<span className="text-indigo-600">&</span>Rate
+            </h1>
+          </Link>
+
+          <nav className="flex items-center space-x-2">
+            {/* Solo Inicio, Conócenos, Registro y Login como en tu original */}
+            <NavLink 
+              to="/" 
+              className={({isActive}) => 
+                `px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive 
+                    ? 'bg-slate-900 text-white' 
+                    : 'text-slate-700 hover:text-indigo-600'
+                }`
+              }
+            >
+              Inicio
+            </NavLink>
+            
+            <NavLink 
+              to="/conocenos" 
+              className={({isActive}) => 
+                `px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive 
+                    ? 'bg-slate-900 text-white' 
+                    : 'text-slate-700 hover:text-indigo-600'
+                }`
+              }
+            >
+              Conócenos
+            </NavLink>
+
+            {!user && (
+              <>
+                <NavLink 
+                  to="/registro" 
+                  className={({isActive}) => 
+                    `px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isActive 
+                        ? 'bg-slate-900 text-white' 
+                        : 'text-slate-700 hover:text-indigo-600'
+                    }`
+                  }
+                >
+                  Registro
+                </NavLink>
+                
+                <NavLink 
+                  to="/login"
+                  className={({isActive}) => 
+                    `px-6 py-2 rounded-lg font-semibold transition-colors ${
+                      isActive 
+                        ? 'bg-slate-900 text-white' 
+                        : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'
+                    }`
+                  }
+                >
+                  Login
+                </NavLink>
+              </>
+            )}
+
+            {user && (
+              <NavLink
+                to="/dashboard"
+                className={({isActive}) => 
+                  `ml-2 px-6 py-2 rounded-lg font-semibold transition-colors ${
+                    isActive 
+                      ? 'bg-slate-900 text-white' 
+                      : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'
+                  }`
+                }
+              >
+                Mi Panel
+              </NavLink>
+            )}
+          </nav>
         </div>
-
-        <nav className="flex space-x-1 md:space-x-2 items-center">
-          {/* Siempre visibles */}
-          <Link to="/" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Inicio</Link>
-          <Link to="/conocenos" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Conócenos</Link>
-
-          {/* Si NO hay sesión → mostrar login y registro */}
-          {!user && (
-            <>
-              <Link to="/registro" className="px-4 py-2 text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition duration-200 font-medium">Registro</Link>
-              <Link to="/login" className="ml-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition duration-200 font-semibold">Login</Link>
-            </>
-          )}
-
-          {/* Si hay sesión → mostrar solo "Mi Panel" */}
-          {user && (
-            <>
-              <Link to="/dashboard" className="ml-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition duration-200 font-semibold">Mi Panel</Link>
-            </>
-          )}
-        </nav>
       </header>
 
-      {/* Rutas */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/conocenos" element={<Conocenos />} />
-        <Route path="/registro" element={<Registro onLogin={handleLogin} />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/terminos" element={<Terminos />} />
-        <Route path="/privacidad" element={<Privacidad />} />
-        <Route path="/recuperar-cuenta" element={<RecuperarCuenta />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/escribir-resena" element={<EscribirResena />} />
-        <Route path="/hoteles" element={<Hoteles />} />
-        <Route path="/restaurantes" element={<Restaurantes />} />
-        <Route path="/entretenimiento" element={<Entretenimiento />} />
-        <Route path="/atracciones" element={<Atracciones />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/editarperfil" element={<EditarPerfil />} />
-        <Route path="/lugaresform" element={<LugaresForm />} />
-        <Route path="/favoritos" element={<Favoritos />} />
-        <Route path="/mis-lugares" element={<MisLugares />} />
-        <Route path="/reseñas" element={<MisResenias />} />
-        <Route path="/admin/usuarios" element={<GestionUsuarios />} />
-        <Route path="/admin/reportes-resenas" element={<ReporteResenas />} />
-        <Route path="/admin/ReporteGeneralResenas" element={<ReporteGeneralResenas />} />
-        <Route path="/admin/estadisticas" element={<Estadisticas />} />
+      {/* ================= BREADCRUMBS ================= */}
+      <Breadcrumbs />
 
-        {/* ✅ NUEVA RUTA: Detalle del lugar con reseñas */}
-        <Route path="/lugar/:id" element={<DetalleLugar />} />
+      {/* ================= RUTAS ================= */}
+      <main className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/conocenos" element={<Conocenos />} />
+          <Route path="/registro" element={<Registro onLogin={handleLogin} />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/terminos" element={<Terminos />} />
+          <Route path="/privacidad" element={<Privacidad />} />
+          <Route path="/recuperar-cuenta" element={<RecuperarCuenta />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/escribir-resena" element={<EscribirResena />} />
+          <Route path="/hoteles" element={<Hoteles />} />
+          <Route path="/restaurantes" element={<Restaurantes />} />
+          <Route path="/entretenimiento" element={<Entretenimiento />} />
+          <Route path="/atracciones" element={<Atracciones />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/editarperfil" element={<EditarPerfil />} />
+          <Route path="/lugaresform" element={<LugaresForm />} />
+          <Route path="/favoritos" element={<Favoritos />} />
+          <Route path="/mis-lugares" element={<MisLugares />} />
+          <Route path="/reseñas" element={<MisResenias />} />
+          <Route path="/admin/usuarios" element={<GestionUsuarios />} />
+          <Route path="/admin/reportes-resenas" element={<ReporteResenas />} />
+          <Route path="/admin/ReporteGeneralResenas" element={<ReporteGeneralResenas />} />
+          <Route path="/admin/estadisticas" element={<Estadisticas />} />
+          <Route path="/lugar/:id" element={<DetalleLugar />} />
 
-        {/* Página no encontrada */}
-        <Route
-          path="*"
-          element={
-            <h1 className="text-center text-2xl mt-20 text-pink-600">
-              Página no encontrada 💭
-            </h1>
-          }
-        />
-      </Routes>
+          <Route
+            path="*"
+            element={
+              <h1 className="text-center text-2xl mt-20 text-pink-600">
+                Página no encontrada 💭
+              </h1>
+            }
+          />
+        </Routes>
+      </main>
 
-      {/* Notificaciones */}
+      {location.pathname !== "/" && (
+        <footer className="bg-slate-900 text-white py-8 mt-16">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <p className="text-sm opacity-90">
+              © 2024 Find&Rate. Todos los derechos reservados.
+            </p>
+
+            <div className="flex justify-center gap-6 mt-4 text-sm">
+              <Link to="/privacidad" className="hover:underline hover:text-indigo-400">
+                Privacidad
+              </Link>
+              <Link to="/terminos" className="hover:underline hover:text-indigo-400">
+                Términos
+              </Link>
+              <Link to="/conocenos" className="hover:underline hover:text-indigo-400">
+                Contacto
+              </Link>
+            </div>
+          </div>
+        </footer>
+      )}
+
       <Toaster
         position="top-right"
         toastOptions={{
@@ -144,7 +278,6 @@ function App() {
   );
 }
 
-// Envolver App dentro del Router (sin FavoritosProvider aquí, ya está en main.jsx)
 export default function AppWrapper() {
   return (
     <Router>
